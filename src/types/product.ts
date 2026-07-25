@@ -21,6 +21,20 @@ export interface Brand {
   preview_image?: string;
 }
 
+export interface ProductImageItem {
+  preview_url: string;
+  original_url: string;
+}
+
+export interface SingleProductVariant {
+  product_variant_id: number;
+  attributes: Record<string, string>;
+  additional_price?: number | null;
+  qty: number;
+  variant_images?: ProductImageItem[] | null;
+  preview_image?: string;
+}
+
 export interface ProductVariant {
   id: number;
   product_id: number;
@@ -62,16 +76,51 @@ export interface Product {
   specification?: string;
   image?: string;
   image_url?: string;
+  preview_image?: string;
   is_featured?: boolean;
   status?: string;
-  category?: Category;
+  category?: Category | string;
   categories?: Category[];
   brand?: Brand;
-  variants?: ProductVariant[];
+  variants?: SingleProductVariant[] | ProductVariant[];
   media?: ProductMedia[];
   reviews?: ProductReview[];
   reviews_avg_rating?: number;
   sales_count?: number;
+}
+
+export interface ProductDetailData {
+  id: number;
+  uuid: string;
+  name: string;
+  slug: string;
+  sku_code?: string;
+  unit_price: number;
+  sale_price?: number;
+  stock: number;
+  description?: string;
+  summary?: string;
+  specification?: string;
+  category?: string;
+  reviews?: ProductReview[];
+  variants?: SingleProductVariant[];
+  product_images?: ProductImageItem[];
+  preview_image?: string;
+  total_ratings?: number;
+  average_rating?: number;
+  total_five_stars?: number;
+  total_four_stars?: number;
+  total_three_stars?: number;
+  total_two_stars?: number;
+  total_one_stars?: number;
+  currency?: string;
+  video_link?: string | null;
+  product_unit?: string | null;
+  free_delivery?: boolean;
+  pre_order?: boolean;
+  show_price?: boolean;
+  warranty?: string | null;
+  related_products?: Product[];
 }
 
 export interface CouponCode {

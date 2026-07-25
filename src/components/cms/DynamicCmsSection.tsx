@@ -13,6 +13,7 @@ import { NewArrivals } from './NewArrivals';
 import { MegaDeals } from './MegaDeals';
 import { TopBrands } from './TopBrands';
 import { TrustBadgeBar } from '@/components/common/TrustBadgeBar';
+import { AnnouncementBar } from '@/components/common/AnnouncementBar';
 
 interface DynamicCmsSectionProps {
   block: CmsBlock;
@@ -23,6 +24,10 @@ interface DynamicCmsSectionProps {
 
 export const DynamicCmsSection: React.FC<DynamicCmsSectionProps> = ({ block, heroImages, products, brands }) => {
   const key = block.key.toLowerCase();
+
+  if (key.includes('announcement')) {
+    return null; // Rendered globally in RootLayout (AnnouncementBar)
+  }
 
   if (key.includes('hero')) {
     return <HeroBanner heroImages={heroImages} cmsBlock={block} />;

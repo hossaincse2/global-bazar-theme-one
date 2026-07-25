@@ -21,11 +21,11 @@ export const TrustBadgeBar: React.FC<TrustBadgeBarProps> = ({ cmsBlock }) => {
   };
 
   const defaultBadges = [
-    { title: settings?.trusted_text_2 || 'Official Product', subtitle: 'Guaranteed Quality', icon: Award, color: 'text-blue-600 bg-blue-50' },
-    { title: settings?.trusted_text_3 || '0% EMI Available', subtitle: 'Guaranteed Quality', icon: CreditCard, color: 'text-amber-600 bg-amber-50' },
-    { title: settings?.trusted_text_4 || 'Easy Exchange', subtitle: 'Guaranteed Quality', icon: RefreshCw, color: 'text-emerald-600 bg-emerald-50' },
-    { title: settings?.trusted_text_5 || 'Fastest Delivery', subtitle: 'Guaranteed Quality', icon: Truck, color: 'text-indigo-600 bg-indigo-50' },
-    { title: settings?.trusted_text_6 || '100% Secure Payment', subtitle: 'Guaranteed Quality', icon: ShieldCheck, color: 'text-purple-600 bg-purple-50' },
+    { title: 'Official Product', subtitle: 'Guaranteed Quality', icon: Award, color: 'text-blue-600 bg-blue-50' },
+    { title: '0% EMI Available', subtitle: 'Guaranteed Quality', icon: CreditCard, color: 'text-amber-600 bg-amber-50' },
+    { title: 'Easy Exchange', subtitle: 'Guaranteed Quality', icon: RefreshCw, color: 'text-emerald-600 bg-emerald-50' },
+    { title: 'Fastest Delivery', subtitle: 'Guaranteed Quality', icon: Truck, color: 'text-indigo-600 bg-indigo-50' },
+    { title: '100% Secure Payment', subtitle: 'Guaranteed Quality', icon: ShieldCheck, color: 'text-purple-600 bg-purple-50' },
   ];
 
   const colors = [

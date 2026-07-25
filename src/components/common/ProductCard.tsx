@@ -69,7 +69,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div>
           {/* Category / Brand badge */}
           <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">
-            {product.category?.name || 'Top Pick'}
+            {typeof product.category === 'string' ? product.category : product.category?.name || 'Top Pick'}
           </div>
 
           <Link href={`/product/${product.slug}`}>

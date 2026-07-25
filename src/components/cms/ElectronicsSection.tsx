@@ -60,9 +60,15 @@ export const ElectronicsSection: React.FC<ElectronicsSectionProps> = ({ cmsBlock
 
   const electronicsList = products.length > 0 ? products : defaultElectronics;
 
+  const getCatName = (cat?: any) => {
+    if (!cat) return '';
+    if (typeof cat === 'string') return cat.toLowerCase();
+    return (cat.slug || cat.name || '').toLowerCase();
+  };
+
   const filteredProducts = activeTab === 'all'
     ? electronicsList
-    : electronicsList.filter((p) => p.category?.slug === activeTab || p.category?.name.toLowerCase().includes(activeTab));
+    : electronicsList.filter((p) => getCatName(p.category).includes(activeTab));
 
   return (
     <section className="py-12 px-4 bg-white">

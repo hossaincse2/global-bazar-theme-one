@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { useCart } from '@/context/CartContext';
-import { Search, ShoppingCart, Heart, ChevronDown, Smartphone, Laptop, Headphones, Shirt, Sparkles, Menu, X, Store } from 'lucide-react';
+import { getStoreMenus, HeaderMenuItem } from '@/services/cmsService';
+import { Search, ShoppingCart, Heart, ChevronDown, Smartphone, Shirt, Sparkles, Menu, X, Store } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { settings } = useSiteSettings();
@@ -12,8 +13,35 @@ export const Header: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [headerMenus, setHeaderMenus] = useState<HeaderMenuItem[]>([]);
 
   const customLogo = settings?.header_logo;
+
+  useEffect(() => {
+    async function loadMenus() {
+      try {
+        const data = await getStoreMenus('en');
+        if (data?.header_menu && data.header_menu.length > 0) {
+          setHeaderMenus(data.header_menu);
+        }
+      } catch (err) {
+        console.warn('Using fallback default header menu:', err);
+      }
+    }
+    loadMenus();
+  }, []);
+
+  const defaultHeaderMenus: HeaderMenuItem[] = [
+    { title: 'Home', url: '/' },
+    { title: 'Flash Sale', url: '/products?sort_by=discount', badge: 'HOT' },
+    { title: 'Electronics', url: '/products?category=electronics' },
+    { title: 'Fashion', url: '/products?category=fashion' },
+    { title: 'Trending Products', url: '/products?sort_by=best_selling' },
+    { title: 'New Arrivals', url: '/products?sort_by=new_arrival', badge: 'NEW' },
+    { title: 'Mega Deals', url: '/products' },
+  ];
+
+  const activeHeaderMenus = headerMenus.length > 0 ? headerMenus : defaultHeaderMenus;
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
@@ -94,14 +122,14 @@ export const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Categories Bar & Clean Navigation */}
-        <div className="hidden md:flex items-center justify-between py-3 border-t border-slate-100 text-sm font-medium text-slate-700">
-          <div className="flex items-center gap-6">
+        {/* Dynamic Categories Bar & Admin Navigation Links */}
+        <div className="hidden md:flex items-center justify-between py-3 border-t border-slate-100 text-xs font-bold text-slate-700">
+          <div className="flex items-center gap-6 overflow-x-auto">
             {/* Categories Dropdown */}
-            <div className="relative" onMouseLeave={() => setIsCategoryOpen(false)}>
+            <div className="relative shrink-0" onMouseLeave={() => setIsCategoryOpen(false)}>
               <button
                 onMouseEnter={() => setIsCategoryOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition"
+                className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition"
               >
                 <Menu className="w-4 h-4 text-blue-400" />
                 <span>Browse Categories</span>
@@ -109,61 +137,54 @@ export const Header: React.FC = () => {
               </button>
 
               {isCategoryOpen && (
-                <div className="absolute top-full left-0 w-80 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  
-                  {/* Electronics */}
+                <div className="absolute top-full left-0 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="mb-4">
-                    <div className="flex items-center gap-2 font-bold text-slate-900 text-sm border-b border-slate-100 pb-2 mb-2">
+                    <div className="flex items-center gap-2 font-bold text-slate-900 text-xs border-b border-slate-100 pb-2 mb-2">
                       <Smartphone className="w-4 h-4 text-blue-600" />
-                      <span>Electronics</span>
+                      <span>Electronics Hub</span>
                     </div>
                     <div className="pl-6 space-y-1.5 text-xs text-slate-600">
-                      <Link href="/products?category=smartphones" className="block hover:text-blue-600 transition">
-                        <span>Smartphones</span>
-                      </Link>
-                      <Link href="/products?category=laptops" className="block hover:text-blue-600 transition">
-                        <span>Laptops & Computers</span>
-                      </Link>
-                      <Link href="/products?category=accessories" className="block hover:text-blue-600 transition">
-                        <span>Accessories & Audio</span>
-                      </Link>
+                      <Link href="/products?category=electronics" className="block hover:text-blue-600 transition">Smartphones</Link>
+                      <Link href="/products?category=electronics" className="block hover:text-blue-600 transition">Laptops & Computers</Link>
+                      <Link href="/products?category=electronics" className="block hover:text-blue-600 transition">Accessories & Audio</Link>
                     </div>
                   </div>
 
-                  {/* Fashion */}
                   <div>
-                    <div className="flex items-center gap-2 font-bold text-slate-900 text-sm border-b border-slate-100 pb-2 mb-2">
+                    <div className="flex items-center gap-2 font-bold text-slate-900 text-xs border-b border-slate-100 pb-2 mb-2">
                       <Shirt className="w-4 h-4 text-amber-500" />
-                      <span>Fashion</span>
+                      <span>Fashion & Lifestyle</span>
                     </div>
                     <div className="pl-6 space-y-1.5 text-xs text-slate-600">
-                      <Link href="/products?category=mens-wear" className="block hover:text-blue-600 transition">
-                        <span>Men&apos;s Wear</span>
-                      </Link>
-                      <Link href="/products?category=womens-wear" className="block hover:text-blue-600 transition">
-                        <span>Women&apos;s Wear</span>
-                      </Link>
-                      <Link href="/products?category=kids-wear" className="block hover:text-blue-600 transition">
-                        <span>Kids Wear</span>
-                      </Link>
+                      <Link href="/products?category=fashion" className="block hover:text-blue-600 transition">Men&apos;s Wear</Link>
+                      <Link href="/products?category=fashion" className="block hover:text-blue-600 transition">Women&apos;s Wear</Link>
+                      <Link href="/products?category=fashion" className="block hover:text-blue-600 transition">Kids Collection</Link>
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
-            <Link href="/" className="hover:text-blue-600 transition">Home</Link>
-            <Link href="/products" className="hover:text-blue-600 transition">Shop All</Link>
-            <Link href="/products?category=electronics" className="hover:text-blue-600 transition">Electronics</Link>
-            <Link href="/products?category=fashion" className="hover:text-blue-600 transition">Fashion</Link>
-            <Link href="/products?sort_by=discount" className="hover:text-amber-600 transition font-semibold text-amber-600">
-              Special Offers
-            </Link>
+            {/* Dynamic Admin-Managed Header Links */}
+            {activeHeaderMenus.map((item, idx) => (
+              <Link
+                key={idx}
+                href={item.url || '/'}
+                className="hover:text-blue-600 transition shrink-0 flex items-center gap-1.5"
+              >
+                <span>{item.title}</span>
+                {item.badge && (
+                  <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
           </div>
 
-          <div className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+          <div className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1.5 shrink-0">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Fast Shipping Worldwide</span>
+            <span>Fast Nationwide Delivery</span>
           </div>
         </div>
       </div>

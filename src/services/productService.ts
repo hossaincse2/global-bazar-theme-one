@@ -1,5 +1,5 @@
 import { fetchApi } from './apiClient';
-import { Product, CouponCode, ProductVariant } from '@/types/product';
+import { Product, CouponCode, ProductDetailData } from '@/types/product';
 import { HeroImage } from '@/types/settings';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
 
@@ -41,8 +41,8 @@ export async function getCategoryWiseProducts(locale = 'en', category?: string):
   return response?.data || [];
 }
 
-export async function getSingleProduct(slug: string, locale = 'en'): Promise<Product | null> {
-  const response = await fetchApi<ApiResponse<Product>>(`/product/${slug}`, { locale, useLocalePrefix: true });
+export async function getSingleProduct(slug: string, locale = 'en'): Promise<ProductDetailData | null> {
+  const response = await fetchApi<ApiResponse<ProductDetailData>>(`/product/${slug}`, { locale, useLocalePrefix: true });
   return response?.data || null;
 }
 

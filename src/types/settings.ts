@@ -31,14 +31,42 @@ export interface SiteSettings {
   header_text_color?: string;
   footer_bg_color?: string;
   footer_text_color?: string;
-  trusted_text_1?: string;
-  trusted_text_2?: string;
-  trusted_text_3?: string;
-  trusted_text_4?: string;
-  trusted_text_5?: string;
-  trusted_text_6?: string;
   announcement_text?: string;
   card_button_text?: string;
+}
+
+export interface ThemeOptions {
+  base_colors?: {
+    primary_color?: string;
+    secondary_color?: string;
+    font_family?: string;
+  };
+  button_settings?: {
+    text?: string;
+    bg_color?: string;
+    text_color?: string;
+    hover_bg_color?: string;
+    hover_text_color?: string;
+    card_button_text?: string;
+    card_bg_color?: string;
+    card_text_color?: string;
+    card_hover_bg_color?: string;
+    card_hover_text_color?: string;
+  };
+  announcement_bar?: {
+    text?: string;
+  };
+  header?: {
+    bg_color?: string;
+    top_bg_color?: string;
+    text_color?: string;
+    font_family?: string;
+  };
+  footer?: {
+    bg_color?: string;
+    text_color?: string;
+    font_family?: string;
+  };
 }
 
 export interface HeroImage {

@@ -1,13 +1,55 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { getStoreMenus, FooterMenuColumn } from '@/services/cmsService';
 import { Phone, Mail, MapPin, Send, ShieldCheck, Store } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { settings } = useSiteSettings();
+  const [footerColumns, setFooterColumns] = useState<FooterMenuColumn[]>([]);
+
   const footerLogo = settings?.footer_logo;
+
+  useEffect(() => {
+    async function loadMenus() {
+      try {
+        const data = await getStoreMenus('en');
+        if (data?.footer_menu && data.footer_menu.length > 0) {
+          setFooterColumns(data.footer_menu);
+        }
+      } catch (err) {
+        console.warn('Using fallback default footer menu:', err);
+      }
+    }
+    loadMenus();
+  }, []);
+
+  const defaultFooterColumns: FooterMenuColumn[] = [
+    {
+      column_title: 'Top Categories',
+      links: [
+        { title: 'Smartphones & Mobiles', url: '/products?category=electronics' },
+        { title: 'Laptops & Accessories', url: '/products?category=electronics' },
+        { title: 'Men\'s Fashion', url: '/products?category=fashion' },
+        { title: 'Women\'s Fashion', url: '/products?category=fashion' },
+        { title: 'Flash Sale Deals', url: '/products?sort_by=discount' },
+      ],
+    },
+    {
+      column_title: 'Customer Care',
+      links: [
+        { title: 'Help Center & Support', url: '/' },
+        { title: 'Track Your Order', url: '/' },
+        { title: 'Return & Refund Policy', url: '/' },
+        { title: 'Shipping & Delivery Info', url: '/' },
+        { title: 'Terms & Conditions', url: '/' },
+      ],
+    },
+  ];
+
+  const activeFooterColumns = footerColumns.length > 0 ? footerColumns : defaultFooterColumns;
 
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800">
@@ -50,33 +92,23 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">
-              Categories
-            </h4>
-            <ul className="space-y-2.5 text-xs">
-              <li><Link href="/products?category=smartphones" className="hover:text-white transition">Smartphones</Link></li>
-              <li><Link href="/products?category=laptops" className="hover:text-white transition">Laptops & Accessories</Link></li>
-              <li><Link href="/products?category=mens-wear" className="hover:text-white transition">Men&apos;s Fashion</Link></li>
-              <li><Link href="/products?category=womens-wear" className="hover:text-white transition">Women&apos;s Fashion</Link></li>
-              <li><Link href="/products?sort_by=discount" className="hover:text-white transition">Flash Deals</Link></li>
-            </ul>
-          </div>
-
-          {/* Customer Service */}
-          <div>
-            <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">
-              Help & Info
-            </h4>
-            <ul className="space-y-2.5 text-xs">
-              <li><Link href="#" className="hover:text-white transition">Track Your Order</Link></li>
-              <li><Link href="#" className="hover:text-white transition">Shipping Policy</Link></li>
-              <li><Link href="#" className="hover:text-white transition">Returns & Exchanges</Link></li>
-              <li><Link href="#" className="hover:text-white transition">Terms & Conditions</Link></li>
-              <li><Link href="#" className="hover:text-white transition">Privacy Policy</Link></li>
-            </ul>
-          </div>
+          {/* Dynamic Admin-Managed Footer Menu Columns */}
+          {activeFooterColumns.map((col, idx) => (
+            <div key={idx}>
+              <h4 className="text-white font-bold text-sm uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">
+                {col.column_title}
+              </h4>
+              <ul className="space-y-2.5 text-xs">
+                {col.links.map((linkItem, lIdx) => (
+                  <li key={lIdx}>
+                    <Link href={linkItem.url || '/'} className="hover:text-white transition">
+                      {linkItem.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* Newsletter Box */}
           <div>
