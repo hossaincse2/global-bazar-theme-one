@@ -13,50 +13,13 @@ interface NewArrivalsProps {
 }
 
 export const NewArrivals: React.FC<NewArrivalsProps> = ({ cmsBlock, products = [] }) => {
-  const defaultNewArrivals: Product[] = [
-    {
-      id: 501,
-      name: 'Ultra Slim Smart Ring Fitness Tracker',
-      slug: 'smart-ring-fitness-tracker',
-      unit_price: 15000,
-      sale_price: 12900,
-      image_url: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500&q=80',
-      category: { id: 3, name: 'Accessories', slug: 'accessories' },
-      reviews_avg_rating: 5.0,
-    },
-    {
-      id: 502,
-      name: 'Portable Mini Projector 1080P Full HD',
-      slug: 'portable-mini-projector',
-      unit_price: 22000,
-      sale_price: 18500,
-      image_url: 'https://images.unsplash.com/photo-1535016120720-40c646be5580?w=500&q=80',
-      category: { id: 1, name: 'Electronics', slug: 'electronics' },
-      reviews_avg_rating: 4.8,
-    },
-    {
-      id: 503,
-      name: "Women's Designer Leather Handbag",
-      slug: 'womens-designer-leather-handbag',
-      unit_price: 8500,
-      sale_price: 6900,
-      image_url: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&q=80',
-      category: { id: 11, name: "Women's Wear", slug: 'womens-wear' },
-      reviews_avg_rating: 4.9,
-    },
-    {
-      id: 504,
-      name: 'Foldable Drone 4K Camera Dual Battery',
-      slug: 'foldable-drone-4k-camera',
-      unit_price: 32000,
-      sale_price: 27900,
-      image_url: 'https://images.unsplash.com/photo-1527977966376-1c8408f9f108?w=500&q=80',
-      category: { id: 1, name: 'Electronics', slug: 'electronics' },
-      reviews_avg_rating: 4.7,
-    },
-  ];
+  // Take latest products by ID descending
+  const sorted = [...products].sort((a, b) => (b.id || 0) - (a.id || 0));
+  const items = sorted.length > 0 ? sorted.slice(0, 4) : products.slice(0, 4);
 
-  const items = products.length > 0 ? products : defaultNewArrivals;
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-12 px-4 bg-slate-50 border-t border-slate-200">

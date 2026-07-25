@@ -4,7 +4,7 @@ import React from 'react';
 import { CmsBlock } from '@/types/cms';
 import { ProductCard } from '@/components/common/ProductCard';
 import { Product } from '@/types/product';
-import { Star, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 
 interface TrendingProductsProps {
@@ -13,50 +13,13 @@ interface TrendingProductsProps {
 }
 
 export const TrendingProducts: React.FC<TrendingProductsProps> = ({ cmsBlock, products = [] }) => {
-  const defaultTrendingProducts: Product[] = [
-    {
-      id: 401,
-      name: 'Wireless Mechanical Gaming Keyboard RGB',
-      slug: 'wireless-mechanical-gaming-keyboard',
-      unit_price: 9500,
-      sale_price: 7800,
-      image_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500&q=80',
-      category: { id: 3, name: 'Accessories', slug: 'accessories' },
-      reviews_avg_rating: 5.0,
-    },
-    {
-      id: 402,
-      name: 'Ergonomic Office Chair Mesh High-Back',
-      slug: 'ergonomic-office-chair',
-      unit_price: 18500,
-      sale_price: 15900,
-      image_url: 'https://images.unsplash.com/photo-1580481072645-022f9a6d8310?w=500&q=80',
-      category: { id: 20, name: 'Furniture', slug: 'furniture' },
-      reviews_avg_rating: 4.9,
-    },
-    {
-      id: 403,
-      name: 'Smart 4K Ultra HD Android TV 55 Inch',
-      slug: 'smart-4k-ultra-hd-tv',
-      unit_price: 65000,
-      sale_price: 54900,
-      image_url: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=500&q=80',
-      category: { id: 1, name: 'Electronics', slug: 'electronics' },
-      reviews_avg_rating: 4.8,
-    },
-    {
-      id: 404,
-      name: 'Stainless Steel Insulated Smart Water Bottle',
-      slug: 'smart-water-bottle',
-      unit_price: 2500,
-      sale_price: 1890,
-      image_url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&q=80',
-      category: { id: 21, name: 'Lifestyle', slug: 'lifestyle' },
-      reviews_avg_rating: 4.9,
-    },
-  ];
+  // Sort products by sales_count or unit_price or take top items
+  const sorted = [...products].sort((a, b) => (b.sales_count || 0) - (a.sales_count || 0));
+  const items = sorted.length > 0 ? sorted.slice(0, 4) : products.slice(0, 4);
 
-  const items = products.length > 0 ? products : defaultTrendingProducts;
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-12 px-4 bg-white border-t border-slate-200">

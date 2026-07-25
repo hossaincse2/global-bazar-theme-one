@@ -16,7 +16,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { currencyIcon, settings } = useSiteSettings();
 
   const isWishlisted = wishlist.includes(product.id);
-  const imageSrc = product.image_url || product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80';
+  const imageSrc = product.preview_image || product.image_url || product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80';
   
   const hasDiscount = product.sale_price && product.sale_price < product.unit_price;
   const discountPercent = hasDiscount

@@ -13,55 +13,43 @@ interface FashionSectionProps {
 }
 
 export const FashionSection: React.FC<FashionSectionProps> = ({ cmsBlock, products = [] }) => {
-  const defaultFashionProducts: Product[] = [
-    {
-      id: 301,
-      name: "Men's Premium Cotton Casual Shirt",
-      slug: 'mens-premium-cotton-shirt',
-      unit_price: 3500,
-      sale_price: 2690,
-      image_url: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&q=80',
-      category: { id: 10, name: "Men's Wear", slug: 'mens-wear' },
-      reviews_avg_rating: 4.8,
-    },
-    {
-      id: 302,
-      name: "Women's Floral Summer Designer Dress",
-      slug: 'womens-floral-summer-dress',
-      unit_price: 5800,
-      sale_price: 4350,
-      image_url: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&q=80',
-      category: { id: 11, name: "Women's Wear", slug: 'womens-wear' },
-      reviews_avg_rating: 4.9,
-    },
-    {
-      id: 303,
-      name: "Kids Organic Cotton Hoodie Set",
-      slug: 'kids-cotton-hoodie-set',
-      unit_price: 2800,
-      sale_price: 1990,
-      image_url: 'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea?w=500&q=80',
-      category: { id: 12, name: 'Kids Wear', slug: 'kids-wear' },
-      reviews_avg_rating: 4.7,
-    },
-    {
-      id: 304,
-      name: "Men's Classic Slim-Fit Denim Jeans",
-      slug: 'mens-classic-slim-denim-jeans',
-      unit_price: 4200,
-      sale_price: 3490,
-      image_url: 'https://images.unsplash.com/photo-1542272604-780c96856592?w=500&q=80',
-      category: { id: 10, name: "Men's Wear", slug: 'mens-wear' },
-      reviews_avg_rating: 4.8,
-    },
-  ];
+  const getCatName = (cat?: any) => {
+    if (!cat) return '';
+    if (typeof cat === 'string') return cat.toLowerCase();
+    return (cat.name || cat.slug || '').toLowerCase();
+  };
 
-  const fashionList = products.length > 0 ? products : defaultFashionProducts;
+  const fashionProducts = products.filter((p) => {
+    const name = (p.name || '').toLowerCase();
+    const cat = getCatName(p.category);
+    return (
+      cat.includes('fash') ||
+      cat.includes('men') ||
+      cat.includes('women') ||
+      cat.includes('wear') ||
+      cat.includes('shoe') ||
+      cat.includes('sneak') ||
+      cat.includes('cloth') ||
+      name.includes('shirt') ||
+      name.includes('polo') ||
+      name.includes('jacket') ||
+      name.includes('dress') ||
+      name.includes('ultraboost') ||
+      name.includes('air max') ||
+      name.includes('shoe')
+    );
+  });
+
+  const fashionList = fashionProducts.length > 0 ? fashionProducts.slice(0, 4) : products.slice(0, 4);
+
+  if (fashionList.length === 0) {
+    return null;
+  }
 
   const categories = [
-    { name: "Men's Wear", slug: 'mens-wear', count: '120+ Styles', bg: 'from-blue-600 to-indigo-700' },
-    { name: "Women's Wear", slug: 'womens-wear', count: '250+ Styles', bg: 'from-pink-500 to-rose-600' },
-    { name: 'Kids Wear', slug: 'kids-wear', count: '90+ Styles', bg: 'from-amber-500 to-orange-600' },
+    { name: "Men's Wear", slug: 'mens-fashion', count: '120+ Styles', bg: 'from-blue-600 to-indigo-700' },
+    { name: "Women's Wear", slug: 'womens-fashion', count: '250+ Styles', bg: 'from-pink-500 to-rose-600' },
+    { name: 'Footwear & Sneakers', slug: 'sneakers', count: '90+ Styles', bg: 'from-amber-500 to-orange-600' },
   ];
 
   return (
@@ -75,7 +63,7 @@ export const FashionSection: React.FC<FashionSectionProps> = ({ cmsBlock, produc
               <span>👕 {cmsBlock?.title || 'Fashion & Lifestyle'}</span>
             </h2>
             <p className="text-xs text-slate-500 font-medium mt-1">
-              {cmsBlock?.subtitle || 'Trendy Collections for Men, Women & Kids.'}
+              {cmsBlock?.subtitle || 'Trendy Collections for Men, Women & Footwear.'}
             </p>
           </div>
           <Link

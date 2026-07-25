@@ -15,60 +15,50 @@ interface ElectronicsSectionProps {
 export const ElectronicsSection: React.FC<ElectronicsSectionProps> = ({ cmsBlock, products = [] }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'smartphones' | 'laptops' | 'accessories'>('all');
 
-  const defaultElectronics: Product[] = [
-    {
-      id: 201,
-      name: 'Flagship Smartphone 5G 128GB',
-      slug: 'flagship-smartphone-5g',
-      unit_price: 68000,
-      sale_price: 62900,
-      image_url: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500&q=80',
-      category: { id: 1, name: 'Smartphones', slug: 'smartphones' },
-      reviews_avg_rating: 4.8,
-    },
-    {
-      id: 202,
-      name: 'Slim Studio Pro Laptop M2 512GB',
-      slug: 'slim-studio-pro-laptop',
-      unit_price: 145000,
-      sale_price: 132000,
-      image_url: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80',
-      category: { id: 2, name: 'Laptops', slug: 'laptops' },
-      reviews_avg_rating: 4.9,
-    },
-    {
-      id: 203,
-      name: 'Pro Wireless Charging Earbuds ANC',
-      slug: 'pro-wireless-earbuds-anc',
-      unit_price: 14500,
-      sale_price: 11900,
-      image_url: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=500&q=80',
-      category: { id: 3, name: 'Accessories', slug: 'accessories' },
-      reviews_avg_rating: 4.7,
-    },
-    {
-      id: 204,
-      name: 'Smart Watch Series 8 GPS + Cellular',
-      slug: 'smart-watch-series-8',
-      unit_price: 38000,
-      sale_price: 32500,
-      image_url: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80',
-      category: { id: 3, name: 'Accessories', slug: 'accessories' },
-      reviews_avg_rating: 4.8,
-    },
-  ];
-
-  const electronicsList = products.length > 0 ? products : defaultElectronics;
-
   const getCatName = (cat?: any) => {
     if (!cat) return '';
     if (typeof cat === 'string') return cat.toLowerCase();
-    return (cat.slug || cat.name || '').toLowerCase();
+    return (cat.name || cat.slug || '').toLowerCase();
   };
 
+  const electronicsList = products.filter((p) => {
+    const name = (p.name || '').toLowerCase();
+    const cat = getCatName(p.category);
+    return (
+      cat.includes('electr') ||
+      cat.includes('smart') ||
+      cat.includes('phone') ||
+      cat.includes('laptop') ||
+      cat.includes('computer') ||
+      cat.includes('audio') ||
+      cat.includes('headphone') ||
+      name.includes('iphone') ||
+      name.includes('samsung') ||
+      name.includes('macbook') ||
+      name.includes('dell') ||
+      name.includes('sony') ||
+      name.includes('watch')
+    );
+  });
+
+  const displayList = electronicsList.length > 0 ? electronicsList : products;
+
   const filteredProducts = activeTab === 'all'
-    ? electronicsList
-    : electronicsList.filter((p) => getCatName(p.category).includes(activeTab));
+    ? displayList.slice(0, 4)
+    : displayList.filter((p) => {
+        const name = (p.name || '').toLowerCase();
+        const cat = getCatName(p.category);
+        if (activeTab === 'smartphones') return cat.includes('smart') || cat.includes('phone') || name.includes('iphone') || name.includes('samsung');
+        if (activeTab === 'laptops') return cat.includes('laptop') || cat.includes('computer') || name.includes('macbook') || name.includes('dell');
+        if (activeTab === 'accessories') return cat.includes('audio') || cat.includes('headphone') || name.includes('sony') || name.includes('watch');
+        return true;
+      }).slice(0, 4);
+
+  if (filteredProducts.length === 0 && products.length === 0) {
+    return null;
+  }
+
+  const itemsToRender = filteredProducts.length > 0 ? filteredProducts : products.slice(0, 4);
 
   return (
     <section className="py-12 px-4 bg-white">
@@ -113,7 +103,7 @@ export const ElectronicsSection: React.FC<ElectronicsSectionProps> = ({ cmsBlock
 
         {/* Product Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
+          {itemsToRender.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>

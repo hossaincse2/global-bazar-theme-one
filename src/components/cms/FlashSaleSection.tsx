@@ -27,50 +27,13 @@ export const FlashSaleSection: React.FC<FlashSaleSectionProps> = ({ cmsBlock, pr
     return () => clearInterval(timer);
   }, []);
 
-  const defaultFlashProducts: Product[] = [
-    {
-      id: 101,
-      name: 'Flagship Smartphone Pro 256GB',
-      slug: 'flagship-smartphone-pro',
-      unit_price: 95000,
-      sale_price: 79900,
-      image_url: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=500&q=80',
-      category: { id: 1, name: 'Smartphones', slug: 'smartphones' },
-      reviews_avg_rating: 4.9,
-    },
-    {
-      id: 102,
-      name: 'Ultrabook Laptop 16GB RAM 512GB SSD',
-      slug: 'ultrabook-laptop-16gb',
-      unit_price: 125000,
-      sale_price: 108900,
-      image_url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&q=80',
-      category: { id: 2, name: 'Laptops', slug: 'laptops' },
-      reviews_avg_rating: 4.8,
-    },
-    {
-      id: 103,
-      name: 'Active Noise Cancelling Wireless Headphones',
-      slug: 'noise-cancelling-headphones',
-      unit_price: 18500,
-      sale_price: 13900,
-      image_url: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
-      category: { id: 3, name: 'Accessories', slug: 'accessories' },
-      reviews_avg_rating: 4.7,
-    },
-    {
-      id: 104,
-      name: 'Premium Leather Jacket - Men Edition',
-      slug: 'premium-leather-jacket',
-      unit_price: 12000,
-      sale_price: 8900,
-      image_url: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80',
-      category: { id: 4, name: "Men's Wear", slug: 'mens-wear' },
-      reviews_avg_rating: 4.9,
-    },
-  ];
+  // Filter products with discounts first, or take top 4 products
+  const discountedProducts = products.filter(p => p.sale_price && p.sale_price < p.unit_price);
+  const itemsToDisplay = discountedProducts.length > 0 ? discountedProducts.slice(0, 4) : products.slice(0, 4);
 
-  const itemsToDisplay = products.length > 0 ? products.slice(0, 4) : defaultFlashProducts;
+  if (itemsToDisplay.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-12 px-4 bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-red-500/5 border-y border-amber-200/50">
