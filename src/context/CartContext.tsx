@@ -13,12 +13,14 @@ export interface CartItem {
 interface CartContextType {
   cart: CartItem[];
   wishlist: number[];
+  wishlistProducts: Product[];
   isCartOpen: boolean;
   addToCart: (product: Product, quantity?: number, selectedAttributes?: Record<string, string>) => void;
   removeFromCart: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
-  toggleWishlist: (productId: number) => void;
+  toggleWishlist: (productOrId: Product | number) => void;
+  clearWishlist: () => void;
   setIsCartOpen: (open: boolean) => void;
   totalAmount: number;
   totalCount: number;
@@ -27,12 +29,14 @@ interface CartContextType {
 const CartContext = createContext<CartContextType>({
   cart: [],
   wishlist: [],
+  wishlistProducts: [],
   isCartOpen: false,
   addToCart: () => {},
   removeFromCart: () => {},
   updateQuantity: () => {},
   clearCart: () => {},
   toggleWishlist: () => {},
+  clearWishlist: () => {},
   setIsCartOpen: () => {},
   totalAmount: 0,
   totalCount: 0,
@@ -41,6 +45,7 @@ const CartContext = createContext<CartContextType>({
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<number[]>([]);
+  const [wishlistProducts, setWishlistProducts] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -48,10 +53,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const savedCart = localStorage.getItem('gb_cart');
       const savedWishlist = localStorage.getItem('gb_wishlist');
+      const savedWishlistProds = localStorage.getItem('gb_wishlist_products');
+
       if (savedCart) setCart(JSON.parse(savedCart));
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+      if (savedWishlistProds) setWishlistProducts(JSON.parse(savedWishlistProds));
     } catch (e) {
-      console.warn('Could not read cart from localStorage', e);
+      console.warn('Could not read cart/wishlist from localStorage', e);
     }
     setIsInitialized(true);
   }, []);
@@ -60,8 +68,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (isInitialized) {
       localStorage.setItem('gb_cart', JSON.stringify(cart));
       localStorage.setItem('gb_wishlist', JSON.stringify(wishlist));
+      localStorage.setItem('gb_wishlist_products', JSON.stringify(wishlistProducts));
     }
-  }, [cart, wishlist, isInitialized]);
+  }, [cart, wishlist, wishlistProducts, isInitialized]);
 
   const addToCart = (product: Product, quantity = 1, selectedAttributes?: Record<string, string>) => {
     setCart((prev) => {
@@ -92,10 +101,31 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = () => setCart([]);
 
-  const toggleWishlist = (productId: number) => {
-    setWishlist((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
-    );
+  const toggleWishlist = (productOrId: Product | number) => {
+    const id = typeof productOrId === 'number' ? productOrId : productOrId.id;
+
+    setWishlist((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((item) => item !== id);
+      }
+      return [...prev, id];
+    });
+
+    setWishlistProducts((prev) => {
+      const exists = prev.some((p) => p.id === id);
+      if (exists) {
+        return prev.filter((p) => p.id !== id);
+      }
+      if (typeof productOrId !== 'number') {
+        return [...prev, productOrId];
+      }
+      return prev;
+    });
+  };
+
+  const clearWishlist = () => {
+    setWishlist([]);
+    setWishlistProducts([]);
   };
 
   const totalAmount = cart.reduce((sum, item) => {
@@ -110,12 +140,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         cart,
         wishlist,
+        wishlistProducts,
         isCartOpen,
         addToCart,
         removeFromCart,
         updateQuantity,
         clearCart,
         toggleWishlist,
+        clearWishlist,
         setIsCartOpen,
         totalAmount,
         totalCount,

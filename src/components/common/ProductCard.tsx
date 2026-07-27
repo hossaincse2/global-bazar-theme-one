@@ -56,6 +56,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }
   };
 
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist(product);
+  };
+
   return (
     <>
       <div className="group bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-xl hover:border-slate-200 transition-all duration-300 flex flex-col justify-between relative">
@@ -69,33 +75,35 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           />
 
           {hasDiscount && (
-            <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md">
+            <span className="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-md z-10">
               -{discountPercent}% OFF
             </span>
           )}
 
           {isOutOfStock && (
-            <span className="absolute bottom-3 left-3 bg-slate-900/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs">
+            <span className="absolute bottom-3 left-3 bg-slate-900/80 text-white text-[10px] font-bold px-2.5 py-1 rounded-full backdrop-blur-xs z-10">
               Out of Stock
             </span>
           )}
 
           <button
-            onClick={() => toggleWishlist(product.id)}
-            className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition ${
+            type="button"
+            onClick={handleToggleWishlist}
+            className={`absolute top-3 right-3 z-30 p-2 rounded-full backdrop-blur-md transition cursor-pointer active:scale-90 ${
               isWishlisted
-                ? 'bg-red-50 text-red-500 shadow-md'
+                ? 'bg-red-50 text-red-500 shadow-md scale-105'
                 : 'bg-white/80 text-slate-600 hover:bg-white hover:text-red-500'
             }`}
+            title={isWishlisted ? 'Remove from Favorites' : 'Add to Favorites'}
           >
-            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
+            <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
           </button>
 
           {/* Quick View Hover overlay */}
-          <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 pointer-events-none z-10">
             <Link
               href={`/product/${product.slug}`}
-              className="p-3 bg-white text-slate-800 rounded-full shadow-lg hover:bg-blue-600 hover:text-white transition transform translate-y-4 group-hover:translate-y-0 duration-300"
+              className="p-3 bg-white text-slate-800 rounded-full shadow-lg hover:bg-blue-600 hover:text-white transition transform translate-y-4 group-hover:translate-y-0 duration-300 pointer-events-auto"
             >
               <Eye className="w-4 h-4" />
             </Link>

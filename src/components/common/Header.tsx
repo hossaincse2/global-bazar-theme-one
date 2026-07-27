@@ -234,12 +234,14 @@ export const Header: React.FC = () => {
           {/* Actions: Wishlist, Cart & Profile */}
           <div className="flex items-center gap-2 sm:gap-4">
             <Link
-              href="/products"
-              className="p-2 text-slate-600 hover:text-blue-600 rounded-full hover:bg-slate-100 transition relative hidden sm:flex items-center gap-1 text-xs font-semibold"
+              href="/wishlist"
+              className="p-2 text-slate-600 hover:text-blue-600 rounded-full hover:bg-slate-100 transition relative flex items-center gap-1 text-xs font-semibold"
+              title="View Favorites / Wishlist"
             >
-              <Heart className="w-5 h-5 text-slate-600" />
+              <Heart className="w-5 h-5 text-red-500 fill-red-500/20 hover:fill-red-500 transition" />
+              <span className="hidden sm:inline font-bold text-slate-700">Wishlist</span>
               {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="bg-red-500 text-white text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                   {wishlist.length}
                 </span>
               )}

@@ -227,13 +227,14 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
 
                 {/* Wishlist Action Button */}
                 <button
-                  onClick={() => toggleWishlist(product.id)}
-                  className={`absolute top-4 right-4 p-3 rounded-full backdrop-blur-md transition shadow-sm ${
+                  type="button"
+                  onClick={() => toggleWishlist(product)}
+                  className={`absolute top-4 right-4 z-20 p-3 rounded-full backdrop-blur-md transition shadow-md cursor-pointer active:scale-95 ${
                     isWishlisted ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-white/80 text-slate-600 hover:text-rose-600 hover:bg-white'
                   }`}
                   title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
                 >
-                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-rose-600 text-rose-600' : ''}`} />
                 </button>
               </div>
 

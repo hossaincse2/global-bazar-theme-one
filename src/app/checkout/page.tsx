@@ -415,7 +415,7 @@ export default function CheckoutPage() {
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm sm:text-base">Official Order Invoice</h3>
                   <p className="text-xs text-slate-500">
-                    Fetched from: <code className="bg-slate-100 px-1 py-0.5 rounded text-[11px] text-blue-600">https://admin.karbar.shop/api/pos/pos-recent-sales-invoice/{orderResponse.order_number || '15039357'}</code>
+                    Download, print, or view your official receipt
                   </p>
                 </div>
               </div>
@@ -837,7 +837,7 @@ export default function CheckoutPage() {
                     </div>
                     <div>
                       <h2 className="text-base font-bold text-slate-900">Payment Gateway Selection</h2>
-                      <p className="text-xs text-slate-500">Fetched via API: https://admin.karbar.shop/api/payment-gateway</p>
+                      <p className="text-xs text-slate-500">Select your preferred payment method</p>
                     </div>
                   </div>
                   <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100 flex items-center gap-1">
@@ -1128,9 +1128,7 @@ export default function CheckoutPage() {
                 </button>
 
                 <div className="text-center text-[11px] text-slate-400 space-y-1">
-                  <p>🔒 By clicking Place Order, your order is created and invoice fetched.</p>
-                  <p>Order API: <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded text-slate-600">https://admin.karbar.shop/api/product-order</code></p>
-                  <p>Invoice API: <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded text-slate-600">https://admin.karbar.shop/api/pos/pos-recent-sales-invoice/[id]</code></p>
+                  <p>🔒 By clicking Place Order, your order is securely created.</p>
                 </div>
 
               </div>
