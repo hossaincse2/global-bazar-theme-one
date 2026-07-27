@@ -1,15 +1,26 @@
-export interface Category {
+export interface SubCategory {
   id: number;
   name: string;
   slug: string;
   is_featured?: boolean;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  content?: string | null;
+  is_featured?: boolean;
   is_menu_show?: boolean;
   image?: string;
   image_url?: string;
+  category_image?: string;
+  total_products?: string | number;
   children_count?: number;
   products_count?: number;
   parent_id?: number | null;
   children?: Category[];
+  sub_category?: SubCategory[];
   parent?: Category;
 }
 
@@ -31,6 +42,7 @@ export interface SingleProductVariant {
   attributes: Record<string, string>;
   additional_price?: number | null;
   qty: number;
+  stock?: number;
   variant_images?: ProductImageItem[] | null;
   preview_image?: string;
 }
@@ -45,7 +57,7 @@ export interface ProductVariant {
   sale_price?: number;
   stock?: {
     quantity: number;
-  };
+  } | number;
 }
 
 export interface ProductMedia {
@@ -87,6 +99,7 @@ export interface Product {
   reviews?: ProductReview[];
   reviews_avg_rating?: number;
   sales_count?: number;
+  stock?: number;
 }
 
 export interface ProductDetailData {

@@ -102,10 +102,17 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
     );
   }, [product.variants, selectedAttributes]);
 
-  // Handle attribute change and switch main image if variant has a custom image
+  // Handle attribute change and switch main image if variant has a custom image, or fallback to default product image
   const handleSelectAttribute = (attrKey: string, attrVal: string) => {
     const nextAttributes = { ...selectedAttributes, [attrKey]: attrVal };
     setSelectedAttributes(nextAttributes);
+
+    const defaultProductImage =
+      product.preview_image ||
+      (product.product_images && product.product_images.length > 0
+        ? product.product_images[0].original_url || product.product_images[0].preview_url
+        : '') ||
+      (allImages.length > 0 ? allImages[0].url : '');
 
     if (product.variants) {
       const match = product.variants.find((v) => {
@@ -114,12 +121,21 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
       });
 
       if (match) {
+        let variantImg: string | null = null;
         if (match.preview_image) {
-          setSelectedImage(match.preview_image);
+          variantImg = match.preview_image;
         } else if (match.variant_images && match.variant_images.length > 0) {
-          const varImg = match.variant_images[0].original_url || match.variant_images[0].preview_url;
-          if (varImg) setSelectedImage(varImg);
+          variantImg = match.variant_images[0].original_url || match.variant_images[0].preview_url || null;
         }
+
+        if (variantImg) {
+          setSelectedImage(variantImg);
+        } else if (defaultProductImage) {
+          // Fallback to default product image if variant has no custom image
+          setSelectedImage(defaultProductImage);
+        }
+      } else if (defaultProductImage) {
+        setSelectedImage(defaultProductImage);
       }
     }
   };
@@ -143,13 +159,21 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
   const handleAddToCart = (openDrawer = true) => {
     if (isOutOfStock) return;
 
+    const defaultProductImage =
+      product.preview_image ||
+      (product.product_images && product.product_images.length > 0
+        ? product.product_images[0].original_url || product.product_images[0].preview_url
+        : '') ||
+      (allImages.length > 0 ? allImages[0].url : '');
+
     const cartProduct: Product = {
       id: product.id,
       name: product.name,
       slug: product.slug,
       unit_price: unitPrice,
       sale_price: salePrice || undefined,
-      preview_image: selectedImage || product.preview_image || '',
+      preview_image: selectedImage || defaultProductImage,
+      image_url: selectedImage || defaultProductImage,
       category: product.category,
     };
 

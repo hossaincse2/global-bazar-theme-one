@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { useCart } from '@/context/CartContext';
 import { getStoreMenus, HeaderMenuItem } from '@/services/cmsService';
-import { Search, ShoppingCart, Heart, ChevronDown, Smartphone, Shirt, Sparkles, Menu, X, Store } from 'lucide-react';
+import { getApiCategories } from '@/services/categoryService';
+import { Category } from '@/types/product';
+import { Search, ShoppingCart, Heart, ChevronDown, Smartphone, Shirt, Sparkles, Menu, X, Store, Layers } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { settings } = useSiteSettings();
@@ -14,21 +16,30 @@ export const Header: React.FC = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [headerMenus, setHeaderMenus] = useState<HeaderMenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const customLogo = settings?.header_logo;
 
   useEffect(() => {
-    async function loadMenus() {
+    async function loadData() {
       try {
-        const data = await getStoreMenus('en');
-        if (data?.header_menu && data.header_menu.length > 0) {
-          setHeaderMenus(data.header_menu);
+        const [menuData, catData] = await Promise.all([
+          getStoreMenus('en'),
+          getApiCategories({ locale: 'bn' }),
+        ]);
+
+        if (menuData?.header_menu && menuData.header_menu.length > 0) {
+          setHeaderMenus(menuData.header_menu);
+        }
+
+        if (catData && catData.length > 0) {
+          setCategories(catData);
         }
       } catch (err) {
-        console.warn('Using fallback default header menu:', err);
+        console.warn('Error loading header dynamic data:', err);
       }
     }
-    loadMenus();
+    loadData();
   }, []);
 
   const defaultHeaderMenus: HeaderMenuItem[] = [
@@ -137,30 +148,57 @@ export const Header: React.FC = () => {
               </button>
 
               {isCategoryOpen && (
-                <div className="absolute top-full left-0 w-72 bg-white rounded-xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 font-bold text-slate-900 text-xs border-b border-slate-100 pb-2 mb-2">
-                      <Smartphone className="w-4 h-4 text-blue-600" />
-                      <span>Electronics Hub</span>
-                    </div>
-                    <div className="pl-6 space-y-1.5 text-xs text-slate-600">
-                      <Link href="/products?category=electronics" className="block hover:text-blue-600 transition">Smartphones</Link>
-                      <Link href="/products?category=electronics" className="block hover:text-blue-600 transition">Laptops & Computers</Link>
-                      <Link href="/products?category=electronics" className="block hover:text-blue-600 transition">Accessories & Audio</Link>
-                    </div>
-                  </div>
+                <div className="absolute top-full left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[75vh] overflow-y-auto divide-y divide-slate-100">
+                  {categories.length === 0 ? (
+                    <div className="py-4 text-center text-slate-400 text-xs font-medium">Loading categories...</div>
+                  ) : (
+                    categories.map((cat) => (
+                      <div key={cat.id || cat.slug} className="py-2.5 first:pt-0 last:pb-0">
+                        <Link
+                          href={`/products?category=${encodeURIComponent(cat.slug)}`}
+                          onClick={() => setIsCategoryOpen(false)}
+                          className="flex items-center justify-between group py-1"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {cat.category_image ? (
+                              <img
+                                src={cat.category_image}
+                                alt={cat.name}
+                                className="w-5 h-5 object-contain shrink-0 rounded"
+                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                              />
+                            ) : (
+                              <Layers className="w-4 h-4 text-blue-600 shrink-0" />
+                            )}
+                            <span className="font-bold text-slate-800 text-xs group-hover:text-blue-600 transition truncate">
+                              {cat.name}
+                            </span>
+                          </div>
+                          {cat.total_products !== undefined && (
+                            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
+                              {cat.total_products} items
+                            </span>
+                          )}
+                        </Link>
 
-                  <div>
-                    <div className="flex items-center gap-2 font-bold text-slate-900 text-xs border-b border-slate-100 pb-2 mb-2">
-                      <Shirt className="w-4 h-4 text-amber-500" />
-                      <span>Fashion & Lifestyle</span>
-                    </div>
-                    <div className="pl-6 space-y-1.5 text-xs text-slate-600">
-                      <Link href="/products?category=fashion" className="block hover:text-blue-600 transition">Men&apos;s Wear</Link>
-                      <Link href="/products?category=fashion" className="block hover:text-blue-600 transition">Women&apos;s Wear</Link>
-                      <Link href="/products?category=fashion" className="block hover:text-blue-600 transition">Kids Collection</Link>
-                    </div>
-                  </div>
+                        {/* Sub-categories */}
+                        {cat.sub_category && cat.sub_category.length > 0 && (
+                          <div className="pl-7 mt-1.5 space-y-1">
+                            {cat.sub_category.map((sub) => (
+                              <Link
+                                key={sub.id || sub.slug}
+                                href={`/products?category=${encodeURIComponent(cat.slug)}&sub_category=${encodeURIComponent(sub.slug)}`}
+                                onClick={() => setIsCategoryOpen(false)}
+                                className="block text-[11px] font-medium text-slate-500 hover:text-blue-600 transition"
+                              >
+                                • {sub.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               )}
             </div>

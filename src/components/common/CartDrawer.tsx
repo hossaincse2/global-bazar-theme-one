@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
@@ -53,7 +54,7 @@ export const CartDrawer: React.FC = () => {
             ) : (
               cart.map(({ product, quantity }) => {
                 const itemPrice = product.sale_price || product.unit_price;
-                const imageSrc = product.image_url || product.image || '/placeholder.png';
+                const imageSrc = product.preview_image || product.image_url || product.image || '/placeholder.png';
 
                 return (
                   <div key={product.id} className="flex gap-4 p-3 bg-slate-50 rounded-xl border border-slate-100 relative group">
@@ -118,13 +119,14 @@ export const CartDrawer: React.FC = () => {
                 >
                   Clear Cart
                 </button>
-                <button
-                  onClick={() => alert('Proceeding to Checkout...')}
+                <Link
+                  href="/checkout"
+                  onClick={() => setIsCartOpen(false)}
                   className="py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5 shadow-md shadow-blue-500/20"
                 >
                   <span>Checkout</span>
                   <ArrowRight className="w-4 h-4" />
-                </button>
+                </Link>
               </div>
             </div>
           )}
