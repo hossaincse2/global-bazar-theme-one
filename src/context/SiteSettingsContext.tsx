@@ -11,6 +11,22 @@ interface SiteSettingsContextType {
   loading: boolean;
 }
 
+export const formatDynamicAnnouncement = (rawText?: string): string => {
+  const todayFormatted = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
+  const defaultMsg = 'Sunday, 6 January, All our branches are open except IDB Branch. Additionally, our online activities are open and operational.';
+  const baseText = rawText || defaultMsg;
+
+  return baseText.replace(
+    /(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday),\s*\d+\s*(?:January|February|March|April|May|June|July|August|September|October|November|December)/gi,
+    todayFormatted
+  );
+};
+
 const defaultSettings: SiteSettings = {
   title: 'Global Bazar Store',
   company_name: 'Global Bazar Store',
@@ -21,7 +37,7 @@ const defaultSettings: SiteSettings = {
   fev_icon: '',
   phone: '01639446656',
   email: 'support@globalbazar.com',
-  announcement_text: 'Sunday, 6 January, All our branches are open except IDB Branch. Additionally, our online activities are open and operational.',
+  announcement_text: formatDynamicAnnouncement('Sunday, 6 January, All our branches are open except IDB Branch. Additionally, our online activities are open and operational.'),
   inside_dhaka: '70',
   outside_dhaka: '150',
   card_button_text: 'ADD CART',

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useSiteSettings } from '@/context/SiteSettingsContext';
+import { useSiteSettings, formatDynamicAnnouncement } from '@/context/SiteSettingsContext';
 import { getCmsBlocks } from '@/services/cmsService';
 import { CmsBlock } from '@/types/cms';
 import { Phone, Mail, Sparkles } from 'lucide-react';
@@ -35,7 +35,8 @@ export const AnnouncementBar: React.FC<AnnouncementBarProps> = ({ cmsBlock: prop
     return null;
   }
 
-  const announcementText = block?.title || block?.description || settings?.announcement_text;
+  const rawAnnouncement = block?.title || block?.description || settings?.announcement_text;
+  const announcementText = formatDynamicAnnouncement(rawAnnouncement);
 
   if (!announcementText) return null;
 
