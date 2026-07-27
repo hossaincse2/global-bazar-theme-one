@@ -212,8 +212,11 @@ export const ProductDetailView: React.FC<ProductDetailViewProps> = ({ product })
               {/* Main Image Stage */}
               <div className="relative aspect-4/3 w-full bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden flex items-center justify-center group">
                 <img
-                  src={selectedImage}
+                  src={selectedImage || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&q=80'}
                   alt={product.name}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600&q=80';
+                  }}
                   className="w-full h-full object-contain p-4 group-hover:scale-105 transition duration-500"
                 />
 

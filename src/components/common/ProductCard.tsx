@@ -18,8 +18,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isWishlisted = wishlist.includes(product.id);
-  const imageSrc = product.preview_image || product.image_url || product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80';
-  
+  const DEFAULT_PRODUCT_IMAGE = 'https://images.unsplash.com/photo-1560343090-f0409e92791a?w=500&q=80';
+  const initialImage = product.preview_image || product.image_url || product.image;
+  const [imgSrc, setImgSrc] = useState(initialImage || DEFAULT_PRODUCT_IMAGE);
+
   const hasDiscount = product.sale_price && product.sale_price < product.unit_price;
   const discountPercent = hasDiscount
     ? Math.round(((product.unit_price - product.sale_price!) / product.unit_price) * 100)
@@ -69,8 +71,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         {/* Badges & Wishlist overlay */}
         <div className="relative aspect-square overflow-hidden bg-slate-50">
           <img
-            src={imageSrc}
+            src={imgSrc}
             alt={product.name}
+            onError={() => setImgSrc(DEFAULT_PRODUCT_IMAGE)}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
 

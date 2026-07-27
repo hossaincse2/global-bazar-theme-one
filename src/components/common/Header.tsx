@@ -375,14 +375,22 @@ export const Header: React.FC = () => {
                                 <span className="text-xs truncate">{cat.name}</span>
                               </div>
 
-                              <div className="flex items-center gap-1 shrink-0">
-                                {cat.total_products !== undefined && (
-                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                                    isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'
-                                  }`}>
-                                    {cat.total_products}
-                                  </span>
-                                )}
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                {(() => {
+                                  const rawVal = cat.total_products ?? cat.products_count ?? 0;
+                                  const count = Number(rawVal) || 0;
+                                  return (
+                                    <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border transition-all ${
+                                      isActive
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                                        : count > 0
+                                        ? 'bg-blue-50 text-blue-700 border-blue-100 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600'
+                                        : 'bg-slate-100 text-slate-400 border-slate-200/60'
+                                    }`}>
+                                      {count} {count === 1 ? 'item' : 'items'}
+                                    </span>
+                                  );
+                                })()}
                                 {hasSub && (
                                   <ChevronRight className={`w-3.5 h-3.5 transition-transform ${
                                     isActive ? 'text-blue-600 translate-x-0.5' : 'text-slate-300 group-hover:text-slate-500'
@@ -418,6 +426,8 @@ export const Header: React.FC = () => {
                       const activeCat = categories.find((c) => c.slug === activeCategorySlug) || categories[0];
                       if (!activeCat) return <div className="py-12 text-center text-slate-400 text-xs">Select a category</div>;
 
+                      const activeCatCount = Number(activeCat.total_products ?? activeCat.products_count ?? 0) || 0;
+
                       return (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
@@ -429,7 +439,9 @@ export const Header: React.FC = () => {
                               )}
                               <div>
                                 <h4 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">{activeCat.name}</h4>
-                                <span className="text-[10px] text-slate-400 font-medium">Sub-categories & collections</span>
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                  {activeCatCount} {activeCatCount === 1 ? 'product' : 'products'} available
+                                </span>
                               </div>
                             </div>
                             <Link

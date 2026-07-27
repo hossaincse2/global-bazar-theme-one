@@ -62,7 +62,7 @@ const FALLBACK_CATEGORIES: Category[] = [
     slug: "travel-item",
     content: null,
     is_featured: true,
-    total_products: "1",
+    total_products: "2",
     category_image: "https://admin.karbar.shop/storage/168/lost-items.png",
     sub_category: []
   },
