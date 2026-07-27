@@ -32,7 +32,9 @@ import {
   Eye,
   Copy,
   FileCheck,
-  X
+  X,
+  Lock,
+  EyeOff
 } from 'lucide-react';
 
 // Sample products matching prompt schema to initialize simple cart data if cart is empty
@@ -86,6 +88,9 @@ export default function CheckoutPage() {
   const [deliveryLocation, setDeliveryLocation] = useState<'inside_dhaka' | 'outside_dhaka'>('inside_dhaka');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('cash');
   const [createAccount, setCreateAccount] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // Payment Gateways API State
   const [paymentMethods, setPaymentMethods] = useState<PaymentGatewayMethod[]>([]);
@@ -212,6 +217,17 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (createAccount) {
+      if (!password || password.length < 6) {
+        setFormError('Please enter a password with at least 6 characters for your new account.');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setFormError('Account passwords do not match. Please enter matching passwords.');
+        return;
+      }
+    }
+
     // Format products according to exact payload specification
     const productsPayload = cart.map((item) => {
       const price = item.product.sale_price || item.product.unit_price;
@@ -241,6 +257,7 @@ export default function CheckoutPage() {
       discount_amount: discountAmount,
       sub_total: cartSubTotal,
       create_account: createAccount,
+      password: createAccount ? password : undefined,
     };
 
     setIsSubmitting(true);
@@ -821,8 +838,62 @@ export default function CheckoutPage() {
                         onChange={(e) => setCreateAccount(e.target.checked)}
                         className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                       />
-                      <span>Create an account for faster checkout next time</span>
+                      <span className="font-semibold text-slate-800">Create an account for faster checkout next time</span>
                     </label>
+
+                    {/* Dynamic Password Setting Block */}
+                    {createAccount && (
+                      <div className="mt-3 p-4 bg-blue-50/70 border border-blue-100 rounded-2xl space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center gap-2 text-xs font-bold text-blue-900">
+                          <Lock className="w-4 h-4 text-blue-600" />
+                          <span>Set Password for Your New Account</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-700 flex items-center justify-between">
+                              <span>Account Password <span className="text-red-500">*</span></span>
+                            </label>
+                            <div className="relative">
+                              <input
+                                type={showPassword ? 'text' : 'password'}
+                                required={createAccount}
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Min 6 characters"
+                                className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:outline-hidden rounded-xl px-3.5 py-2 text-xs text-slate-800 transition pr-10"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                title={showPassword ? 'Hide password' : 'Show password'}
+                              >
+                                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-bold text-slate-700">
+                              Confirm Password <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type={showPassword ? 'text' : 'password'}
+                              required={createAccount}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              placeholder="Re-enter password"
+                              className="w-full bg-white border border-slate-200 focus:border-blue-500 focus:outline-hidden rounded-xl px-3.5 py-2 text-xs text-slate-800 transition"
+                            />
+                          </div>
+                        </div>
+
+                        <p className="text-[11px] text-blue-700 font-medium">
+                          🔑 Your password will be registered with your account so you can log in easily next time.
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                 </div>

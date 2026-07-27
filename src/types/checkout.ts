@@ -37,6 +37,7 @@ export interface ProductOrderPayload {
   discount_amount: number;
   sub_total: number;
   create_account: boolean;
+  password?: string;
 }
 
 export interface ProductOrderResponse {

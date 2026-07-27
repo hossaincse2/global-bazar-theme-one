@@ -24,8 +24,20 @@ export const Header: React.FC = () => {
   const [headerMenus, setHeaderMenus] = useState<HeaderMenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const searchRef = useRef<HTMLDivElement>(null);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   const customLogo = settings?.header_logo;
+
+  // Handle click outside to close search and category dropdowns
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
+        setIsCategoryOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -275,18 +287,32 @@ export const Header: React.FC = () => {
         <div className="hidden md:flex items-center justify-between py-3 border-t border-slate-100 text-xs font-bold text-slate-700">
           <div className="flex items-center gap-6 overflow-x-auto">
             {/* Categories Dropdown */}
-            <div className="relative shrink-0" onMouseLeave={() => setIsCategoryOpen(false)}>
+            <div ref={categoryDropdownRef} className="relative shrink-0">
               <button
-                onMouseEnter={() => setIsCategoryOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition"
+                type="button"
+                onClick={() => setIsCategoryOpen((prev) => !prev)}
+                className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm"
               >
                 <Menu className="w-4 h-4 text-blue-400" />
                 <span>Browse Categories</span>
-                <ChevronDown className="w-3.5 h-3.5" />
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isCategoryOpen && (
                 <div className="absolute top-full left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[75vh] overflow-y-auto divide-y divide-slate-100">
+                  <div className="pb-2.5 mb-2 flex items-center justify-between border-b border-slate-100">
+                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
+                      All Categories ({categories.length})
+                    </span>
+                    <Link
+                      href="/products"
+                      onClick={() => setIsCategoryOpen(false)}
+                      className="text-[11px] font-bold text-blue-600 hover:underline"
+                    >
+                      View All →
+                    </Link>
+                  </div>
+
                   {categories.length === 0 ? (
                     <div className="py-4 text-center text-slate-400 text-xs font-medium">Loading categories...</div>
                   ) : (
