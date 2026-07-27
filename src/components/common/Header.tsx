@@ -9,7 +9,7 @@ import { getStoreMenus, HeaderMenuItem } from '@/services/cmsService';
 import { getApiCategories } from '@/services/categoryService';
 import { getAllProducts } from '@/services/productService';
 import { Category, Product } from '@/types/product';
-import { Search, ShoppingCart, Heart, ChevronDown, Sparkles, Menu, X, Store, Layers, Loader2 } from 'lucide-react';
+import { Search, ShoppingCart, Heart, ChevronDown, ChevronRight, Sparkles, Menu, X, Store, Layers, Loader2 } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const router = useRouter();
@@ -23,6 +23,8 @@ export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [headerMenus, setHeaderMenus] = useState<HeaderMenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [activeCategorySlug, setActiveCategorySlug] = useState<string | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -39,27 +41,48 @@ export const Header: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Fetch header menu links on mount
   useEffect(() => {
-    async function loadData() {
+    async function loadMenus() {
       try {
-        const [menuData, catData] = await Promise.all([
-          getStoreMenus('en'),
-          getApiCategories({ locale: 'bn' }),
-        ]);
-
+        const menuData = await getStoreMenus('en');
         if (menuData?.header_menu && menuData.header_menu.length > 0) {
           setHeaderMenus(menuData.header_menu);
         }
-
-        if (catData && catData.length > 0) {
-          setCategories(catData);
-        }
       } catch (err) {
-        console.warn('Error loading header dynamic data:', err);
+        console.warn('Error loading header menus:', err);
       }
     }
-    loadData();
+    loadMenus();
   }, []);
+
+  // Lazy load categories only on demand when user opens dropdown
+  const fetchCategoriesOnDemand = async () => {
+    if (categories.length > 0 || isLoadingCategories) return;
+    setIsLoadingCategories(true);
+    try {
+      const catData = await getApiCategories({ locale: 'bn' });
+      if (catData && catData.length > 0) {
+        setCategories(catData);
+        const firstWithSub = catData.find(c => c.sub_category && c.sub_category.length > 0) || catData[0];
+        if (firstWithSub) {
+          setActiveCategorySlug(firstWithSub.slug);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading categories on demand:', err);
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  };
+
+  const handleToggleCategoryDropdown = () => {
+    const nextState = !isCategoryOpen;
+    setIsCategoryOpen(nextState);
+    if (nextState && categories.length === 0) {
+      fetchCategoriesOnDemand();
+    }
+  };
 
   // Live Search Products Grid
   useEffect(() => {
@@ -284,14 +307,15 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Dynamic Categories Bar & Admin Navigation Links */}
-        <div className="hidden md:flex items-center justify-between py-3 border-t border-slate-100 text-xs font-bold text-slate-700">
-          <div className="flex items-center gap-6 overflow-x-auto">
-            {/* Categories Dropdown */}
-            <div ref={categoryDropdownRef} className="relative shrink-0">
+        <div className="hidden md:flex items-center justify-between py-2 border-t border-slate-100 text-xs font-bold text-slate-700 relative z-30">
+          <div className="flex items-center gap-4 lg:gap-6 min-w-0">
+            
+            {/* Categories Dropdown - Kept OUTSIDE overflow box so absolute dropdown is NEVER clipped */}
+            <div ref={categoryDropdownRef} className="relative shrink-0 z-50">
               <button
                 type="button"
-                onClick={() => setIsCategoryOpen((prev) => !prev)}
-                className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-sm"
+                onClick={handleToggleCategoryDropdown}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition cursor-pointer active:scale-95 shadow-xs shrink-0"
               >
                 <Menu className="w-4 h-4 text-blue-400" />
                 <span>Browse Categories</span>
@@ -299,92 +323,188 @@ export const Header: React.FC = () => {
               </button>
 
               {isCategoryOpen && (
-                <div className="absolute top-full left-0 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[75vh] overflow-y-auto divide-y divide-slate-100">
-                  <div className="pb-2.5 mb-2 flex items-center justify-between border-b border-slate-100">
-                    <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-                      All Categories ({categories.length})
-                    </span>
-                    <Link
-                      href="/products"
-                      onClick={() => setIsCategoryOpen(false)}
-                      className="text-[11px] font-bold text-blue-600 hover:underline"
-                    >
-                      View All →
-                    </Link>
+                <div className="absolute top-full left-0 mt-2 w-[560px] max-w-[92vw] bg-white rounded-3xl shadow-2xl border border-slate-200/90 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden flex flex-col md:flex-row gap-4">
+                  {/* Left Column: Main Categories List */}
+                  <div className="w-full md:w-60 shrink-0 max-h-[60vh] overflow-y-auto space-y-1 pr-1 scrollbar-thin divide-y divide-slate-100/60">
+                    <div className="pb-2.5 mb-1.5 flex items-center justify-between border-b border-slate-100 px-1">
+                      <span className="text-[11px] font-black text-slate-900 uppercase tracking-wider">
+                        Categories ({categories.length})
+                      </span>
+                      <Link
+                        href="/products"
+                        onClick={() => setIsCategoryOpen(false)}
+                        className="text-[10px] font-bold text-blue-600 hover:underline"
+                      >
+                        All Products →
+                      </Link>
+                    </div>
+
+                    {isLoadingCategories ? (
+                      <div className="py-8 flex flex-col items-center justify-center text-slate-400 space-y-2">
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                        <span className="text-xs font-semibold text-slate-500">Loading categories...</span>
+                      </div>
+                    ) : categories.length === 0 ? (
+                      <div className="py-6 text-center text-slate-400 text-xs font-medium">No categories available</div>
+                    ) : (
+                      categories.map((cat) => {
+                        const hasSub = cat.sub_category && cat.sub_category.length > 0;
+                        const isActive = (activeCategorySlug || categories[0]?.slug) === cat.slug;
+
+                        return (
+                          <div key={cat.id || cat.slug} className="pt-1">
+                            <Link
+                              href={`/products?category=${encodeURIComponent(cat.slug)}`}
+                              onMouseEnter={() => setActiveCategorySlug(cat.slug)}
+                              onClick={() => setIsCategoryOpen(false)}
+                              className={`flex items-center justify-between p-2 rounded-xl group transition cursor-pointer ${
+                                isActive ? 'bg-blue-50/90 text-blue-600 font-bold' : 'hover:bg-slate-50 text-slate-700 font-semibold'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {cat.category_image ? (
+                                  <img
+                                    src={cat.category_image}
+                                    alt={cat.name}
+                                    className="w-5 h-5 object-contain shrink-0 rounded"
+                                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                                  />
+                                ) : (
+                                  <Layers className="w-4 h-4 text-blue-600 shrink-0" />
+                                )}
+                                <span className="text-xs truncate">{cat.name}</span>
+                              </div>
+
+                              <div className="flex items-center gap-1 shrink-0">
+                                {cat.total_products !== undefined && (
+                                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                                    isActive ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'
+                                  }`}>
+                                    {cat.total_products}
+                                  </span>
+                                )}
+                                {hasSub && (
+                                  <ChevronRight className={`w-3.5 h-3.5 transition-transform ${
+                                    isActive ? 'text-blue-600 translate-x-0.5' : 'text-slate-300 group-hover:text-slate-500'
+                                  }`} />
+                                )}
+                              </div>
+                            </Link>
+
+                            {/* Mobile inline fallback for sub-categories */}
+                            {hasSub && isActive && (
+                              <div className="md:hidden pl-7 mt-1.5 space-y-1 pb-2 border-b border-slate-100">
+                                {cat.sub_category!.map((sub) => (
+                                  <Link
+                                    key={sub.id || sub.slug}
+                                    href={`/products?category=${encodeURIComponent(cat.slug)}&sub_category=${encodeURIComponent(sub.slug)}`}
+                                    onClick={() => setIsCategoryOpen(false)}
+                                    className="block text-[11px] font-medium text-slate-500 hover:text-blue-600"
+                                  >
+                                    • {sub.name}
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
 
-                  {categories.length === 0 ? (
-                    <div className="py-4 text-center text-slate-400 text-xs font-medium">Loading categories...</div>
-                  ) : (
-                    categories.map((cat) => (
-                      <div key={cat.id || cat.slug} className="py-2.5 first:pt-0 last:pb-0">
-                        <Link
-                          href={`/products?category=${encodeURIComponent(cat.slug)}`}
-                          onClick={() => setIsCategoryOpen(false)}
-                          className="flex items-center justify-between group py-1"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            {cat.category_image ? (
-                              <img
-                                src={cat.category_image}
-                                alt={cat.name}
-                                className="w-5 h-5 object-contain shrink-0 rounded"
-                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                              />
-                            ) : (
-                              <Layers className="w-4 h-4 text-blue-600 shrink-0" />
-                            )}
-                            <span className="font-bold text-slate-800 text-xs group-hover:text-blue-600 transition truncate">
-                              {cat.name}
-                            </span>
-                          </div>
-                          {cat.total_products !== undefined && (
-                            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
-                              {cat.total_products} items
-                            </span>
-                          )}
-                        </Link>
+                  {/* Right Column: Sub-Categories Panel (Desktop Flyout) */}
+                  <div className="hidden md:flex flex-1 flex-col bg-slate-50/70 rounded-2xl p-4 border border-slate-100 max-h-[60vh] overflow-y-auto">
+                    {(() => {
+                      const activeCat = categories.find((c) => c.slug === activeCategorySlug) || categories[0];
+                      if (!activeCat) return <div className="py-12 text-center text-slate-400 text-xs">Select a category</div>;
 
-                        {/* Sub-categories */}
-                        {cat.sub_category && cat.sub_category.length > 0 && (
-                          <div className="pl-7 mt-1.5 space-y-1">
-                            {cat.sub_category.map((sub) => (
-                              <Link
-                                key={sub.id || sub.slug}
-                                href={`/products?category=${encodeURIComponent(cat.slug)}&sub_category=${encodeURIComponent(sub.slug)}`}
-                                onClick={() => setIsCategoryOpen(false)}
-                                className="block text-[11px] font-medium text-slate-500 hover:text-blue-600 transition"
-                              >
-                                • {sub.name}
-                              </Link>
-                            ))}
+                      return (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/80">
+                            <div className="flex items-center gap-2">
+                              {activeCat.category_image ? (
+                                <img src={activeCat.category_image} alt={activeCat.name} className="w-5 h-5 object-contain" />
+                              ) : (
+                                <Layers className="w-4 h-4 text-blue-600" />
+                              )}
+                              <div>
+                                <h4 className="font-extrabold text-xs text-slate-900 uppercase tracking-wider">{activeCat.name}</h4>
+                                <span className="text-[10px] text-slate-400 font-medium">Sub-categories & collections</span>
+                              </div>
+                            </div>
+                            <Link
+                              href={`/products?category=${encodeURIComponent(activeCat.slug)}`}
+                              onClick={() => setIsCategoryOpen(false)}
+                              className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5"
+                            >
+                              Explore →
+                            </Link>
                           </div>
-                        )}
-                      </div>
-                    ))
-                  )}
+
+                          {activeCat.sub_category && activeCat.sub_category.length > 0 ? (
+                            <div className="grid grid-cols-1 gap-2">
+                              {activeCat.sub_category.map((sub) => (
+                                <Link
+                                  key={sub.id || sub.slug}
+                                  href={`/products?category=${encodeURIComponent(activeCat.slug)}&sub_category=${encodeURIComponent(sub.slug)}`}
+                                  onClick={() => setIsCategoryOpen(false)}
+                                  className="p-2.5 bg-white hover:bg-blue-600 hover:text-white text-slate-800 rounded-xl border border-slate-200/70 transition shadow-2xs group flex items-center justify-between"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <div className="w-7 h-7 rounded-lg bg-blue-50 group-hover:bg-white/20 text-blue-600 group-hover:text-white flex items-center justify-center font-bold text-xs">
+                                      {sub.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                      <span className="font-bold text-xs block">{sub.name}</span>
+                                      <span className="text-[10px] text-slate-400 group-hover:text-blue-100 block">Sub-category collection</span>
+                                    </div>
+                                  </div>
+                                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-white transition" />
+                                </Link>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="py-12 text-center text-slate-400 space-y-2">
+                              <Sparkles className="w-6 h-6 text-amber-400 mx-auto" />
+                              <p className="text-xs font-semibold text-slate-600">Discover top deals in {activeCat.name}</p>
+                              <Link
+                                href={`/products?category=${encodeURIComponent(activeCat.slug)}`}
+                                onClick={() => setIsCategoryOpen(false)}
+                                className="inline-block px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg shadow-xs"
+                              >
+                                Browse Catalog
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
               )}
             </div>
 
             {/* Dynamic Admin-Managed Header Links */}
-            {activeHeaderMenus.map((item, idx) => (
-              <Link
-                key={idx}
-                href={item.url || '/'}
-                className="hover:text-blue-600 transition shrink-0 flex items-center gap-1.5"
-              >
-                <span>{item.title}</span>
-                {item.badge && (
-                  <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
+            <div className="flex items-center gap-3 lg:gap-5 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1">
+              {activeHeaderMenus.map((item, idx) => (
+                <Link
+                  key={idx}
+                  href={item.url || '/'}
+                  className="hover:text-blue-600 transition shrink-0 flex items-center gap-1.5 whitespace-nowrap py-1 px-2 hover:bg-slate-50 rounded-lg"
+                >
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+
           </div>
 
-          <div className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1.5 shrink-0">
+          <div className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 flex items-center gap-1.5 shrink-0 ml-4">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Fast Nationwide Delivery</span>
           </div>
