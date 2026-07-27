@@ -14,7 +14,7 @@ interface SiteSettingsContextType {
 const defaultSettings: SiteSettings = {
   title: 'Global Bazar Store',
   company_name: 'Global Bazar Store',
-  currency_icon: 'TK',
+  currency_icon: '৳',
   currency: 'bdt',
   header_logo: '',
   footer_logo: '',
@@ -30,7 +30,7 @@ const defaultSettings: SiteSettings = {
 const SiteSettingsContext = createContext<SiteSettingsContextType>({
   settings: defaultSettings,
   themeOptions: null,
-  currencyIcon: 'TK',
+  currencyIcon: '৳',
   loading: false,
 });
 
@@ -91,7 +91,7 @@ export const SiteSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ 
     loadData();
   }, []);
 
-  const currencyIcon = settings?.currency_icon || 'TK';
+  const currencyIcon = settings?.currency_icon || '৳';
 
   return (
     <SiteSettingsContext.Provider value={{ settings, themeOptions, currencyIcon, loading }}>

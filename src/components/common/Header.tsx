@@ -1,22 +1,29 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { useCart } from '@/context/CartContext';
 import { getStoreMenus, HeaderMenuItem } from '@/services/cmsService';
 import { getApiCategories } from '@/services/categoryService';
-import { Category } from '@/types/product';
-import { Search, ShoppingCart, Heart, ChevronDown, Smartphone, Shirt, Sparkles, Menu, X, Store, Layers } from 'lucide-react';
+import { getAllProducts } from '@/services/productService';
+import { Category, Product } from '@/types/product';
+import { Search, ShoppingCart, Heart, ChevronDown, Sparkles, Menu, X, Store, Layers, Loader2 } from 'lucide-react';
 
 export const Header: React.FC = () => {
-  const { settings } = useSiteSettings();
+  const router = useRouter();
+  const { settings, currencyIcon } = useSiteSettings();
   const { totalCount, wishlist, setIsCartOpen } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchGrid, setShowSearchGrid] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [headerMenus, setHeaderMenus] = useState<HeaderMenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const customLogo = settings?.header_logo;
 
@@ -40,6 +47,43 @@ export const Header: React.FC = () => {
       }
     }
     loadData();
+  }, []);
+
+  // Live Search Products Grid
+  useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 1) {
+      setSearchResults([]);
+      setShowSearchGrid(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await getAllProducts({ search: searchQuery.trim(), perPage: 6 });
+        if (res?.data) {
+          setSearchResults(res.data);
+          setShowSearchGrid(true);
+        }
+      } catch (err) {
+        console.error('Error fetching live search results:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close search grid when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSearchGrid(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const defaultHeaderMenus: HeaderMenuItem[] = [
@@ -76,13 +120,23 @@ export const Header: React.FC = () => {
             </div>
           </Link>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-xl hidden md:block">
-            <form onSubmit={(e) => { e.preventDefault(); if (searchQuery) window.location.href = `/products?search=${encodeURIComponent(searchQuery)}`; }} className="relative">
+          {/* Search Bar with Live Product Grid Dropdown */}
+          <div ref={searchRef} className="flex-1 max-w-xl hidden md:block relative">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) {
+                  setShowSearchGrid(false);
+                  router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
+              className="relative"
+            >
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => { if (searchResults.length > 0) setShowSearchGrid(true); }}
                 placeholder="Search smartphones, laptops, fashion & deals..."
                 className="w-full bg-slate-100 hover:bg-slate-200/70 focus:bg-white text-slate-800 text-sm rounded-full py-3 pl-5 pr-12 border border-transparent focus:border-blue-500 focus:outline-hidden transition shadow-inner"
               />
@@ -93,6 +147,88 @@ export const Header: React.FC = () => {
                 <Search className="w-4 h-4" />
               </button>
             </form>
+
+            {/* Live Product Grid Popup */}
+            {showSearchGrid && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Search className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Search Results ({searchResults.length})</span>
+                  </span>
+                  <button
+                    onClick={() => setShowSearchGrid(false)}
+                    className="text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {isSearching ? (
+                  <div className="py-8 text-center text-slate-400 text-xs font-semibold flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> Searching products...
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 text-xs font-medium">
+                    No products found for "{searchQuery}".
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* 3-Column Product Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {searchResults.map((product) => {
+                        const price = product.sale_price || product.unit_price;
+                        const imageSrc = product.preview_image || product.image_url || product.image || '/placeholder.png';
+
+                        return (
+                          <Link
+                            key={product.id}
+                            href={`/product/${product.slug}`}
+                            onClick={() => setShowSearchGrid(false)}
+                            className="p-2.5 bg-slate-50 border border-slate-100 hover:border-blue-300 hover:bg-blue-50/30 rounded-xl flex flex-col justify-between transition group"
+                          >
+                            <div className="w-full h-24 bg-white rounded-lg overflow-hidden relative mb-2 border border-slate-100 flex items-center justify-center">
+                              <img
+                                src={imageSrc}
+                                alt={product.name}
+                                className="w-full h-full object-contain group-hover:scale-105 transition duration-300"
+                                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                              />
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition">
+                                {product.name}
+                              </h4>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-xs font-extrabold text-blue-600">
+                                  {currencyIcon} {price.toLocaleString()}
+                                </span>
+                                {product.sale_price && product.unit_price > product.sale_price && (
+                                  <span className="text-[10px] text-slate-400 line-through">
+                                    {currencyIcon} {product.unit_price.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+
+                    {/* View All Link - Search button wise action */}
+                    <button
+                      onClick={() => {
+                        setShowSearchGrid(false);
+                        router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+                      }}
+                      className="block w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-center text-xs font-bold rounded-xl transition mt-2 shadow-md shadow-blue-500/20 active:scale-98"
+                    >
+                      View All Results for "{searchQuery}" →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Actions: Wishlist, Cart & Profile */}
