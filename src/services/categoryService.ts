@@ -1,6 +1,7 @@
 import { fetchApi } from './apiClient';
-import { Category, Brand } from '@/types/product';
+import { Category, Brand, Product } from '@/types/product';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
+import { getAllProducts } from './productService';
 
 const FALLBACK_CATEGORIES: Category[] = [
   {
@@ -108,6 +109,27 @@ const FALLBACK_CATEGORIES: Category[] = [
   }
 ];
 
+function getProductCategorySlugs(product: Product): string[] {
+  const slugs: string[] = [];
+
+  if (product.categories && Array.isArray(product.categories)) {
+    product.categories.forEach((cat) => {
+      if (cat?.slug) slugs.push(cat.slug.toLowerCase());
+    });
+  }
+
+  if (product.category) {
+    if (typeof product.category === 'string') {
+      const slugified = product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      if (slugified) slugs.push(slugified);
+    } else if (product.category.slug) {
+      slugs.push(product.category.slug.toLowerCase());
+    }
+  }
+
+  return Array.from(new Set(slugs));
+}
+
 export async function getApiCategories(
   params: {
     locale?: string;
@@ -142,8 +164,38 @@ export async function getApiCategories(
     }
 
     const data = await res.json();
+    
     if (data && Array.isArray(data.data) && data.data.length > 0) {
-      return data.data;
+      // Dynamically fetch live products to calculate exact product counts per category
+      let dynamicCounts: Record<string, number> = {};
+      try {
+        const productsRes = await getAllProducts({ perPage: 100, locale: 'en' });
+        if (productsRes && Array.isArray(productsRes.data)) {
+          productsRes.data.forEach((p: Product) => {
+            const categorySlugs = getProductCategorySlugs(p);
+            categorySlugs.forEach((slug) => {
+              dynamicCounts[slug] = (dynamicCounts[slug] || 0) + 1;
+            });
+          });
+        }
+      } catch (e) {
+        console.warn('[Category Dynamic Count Calculation Error]', e);
+      }
+
+      return data.data.map((cat: Category) => {
+        const catSlug = cat.slug ? cat.slug.toLowerCase() : '';
+        const calculatedCount = dynamicCounts[catSlug];
+        
+        // Dynamically computed count, falling back to API total_products / products_count
+        const fallbackCount = Number(cat.total_products ?? cat.products_count ?? 0) || 0;
+        const finalCount = calculatedCount !== undefined ? calculatedCount : fallbackCount;
+
+        return {
+          ...cat,
+          total_products: finalCount,
+          products_count: finalCount,
+        };
+      });
     }
     return FALLBACK_CATEGORIES;
   } catch (error) {
