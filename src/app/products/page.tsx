@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getAllProducts } from '@/services/productService';
 import { getAllCategories, getAllBrands } from '@/services/categoryService';
 import { ProductCard } from '@/components/common/ProductCard';
 import { Product, Category, Brand } from '@/types/product';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
-import { Filter, Loader2, RotateCcw, Tag, Award, X, SlidersHorizontal, Check } from 'lucide-react';
+import { Filter, Loader2, RotateCcw, Tag, Award, X, SlidersHorizontal, Check, Sparkles, CheckCircle2 } from 'lucide-react';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -25,6 +25,9 @@ function ProductsContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedBrand, setSelectedBrand] = useState(initialBrand);
@@ -39,6 +42,8 @@ function ProductsContent() {
 
   // Mobile filter drawer state
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  const observerTargetRef = useRef<HTMLDivElement | null>(null);
 
   // Synchronize state when searchParams URL changes
   useEffect(() => {
@@ -59,9 +64,14 @@ function ProductsContent() {
     setAppliedMaxPrice(maxP);
   }, [searchParams]);
 
+  // Reset & load initial page 1 whenever filters change
   useEffect(() => {
-    async function loadData() {
+    let isMounted = true;
+    async function loadInitialData() {
       setLoading(true);
+      setPage(1);
+      setHasMore(true);
+
       try {
         const [prodRes, catList, brandList] = await Promise.all([
           getAllProducts({
@@ -71,24 +81,91 @@ function ProductsContent() {
             sort_by: sortBy || undefined,
             min_price: appliedMinPrice ? Number(appliedMinPrice) : undefined,
             max_price: appliedMaxPrice ? Number(appliedMaxPrice) : undefined,
-            perPage: 24,
+            page: 1,
+            perPage: 12,
           }),
-          getAllCategories('en'),
-          getAllBrands('en'),
+          categories.length === 0 ? getAllCategories('en') : Promise.resolve(categories),
+          brands.length === 0 ? getAllBrands('en') : Promise.resolve(brands),
         ]);
 
-        if (prodRes?.data) setProducts(prodRes.data);
-        if (catList) setCategories(catList);
-        if (brandList) setBrands(brandList);
+        if (isMounted) {
+          const loadedProducts = prodRes?.data || [];
+          setProducts(loadedProducts);
+          if (catList && categories.length === 0) setCategories(catList);
+          if (brandList && brands.length === 0) setBrands(brandList);
+
+          const lastPage = prodRes?.meta?.last_page || (prodRes as any)?.last_page || 1;
+          setHasMore(loadedProducts.length >= 12 && 1 < lastPage);
+        }
       } catch (err) {
-        console.error('Error fetching products catalog:', err);
+        console.error('Error fetching initial products catalog:', err);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
 
-    loadData();
+    loadInitialData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [selectedCategory, selectedBrand, searchQuery, sortBy, appliedMinPrice, appliedMaxPrice]);
+
+  // Load next page function for infinite scroll
+  const loadNextPage = useCallback(async () => {
+    if (loading || loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      const prodRes = await getAllProducts({
+        category: selectedCategory || undefined,
+        brand_id: selectedBrand || undefined,
+        search: searchQuery || undefined,
+        sort_by: sortBy || undefined,
+        min_price: appliedMinPrice ? Number(appliedMinPrice) : undefined,
+        max_price: appliedMaxPrice ? Number(appliedMaxPrice) : undefined,
+        page: nextPage,
+        perPage: 12,
+      });
+
+      const newProducts = prodRes?.data || [];
+      if (newProducts.length > 0) {
+        setProducts((prev) => [...prev, ...newProducts]);
+        setPage(nextPage);
+        const lastPage = prodRes?.meta?.last_page || (prodRes as any)?.last_page || nextPage;
+        setHasMore(newProducts.length >= 12 && nextPage < lastPage);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Error loading next page for infinite scroll:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loading, loadingMore, hasMore, page, selectedCategory, selectedBrand, searchQuery, sortBy, appliedMinPrice, appliedMaxPrice]);
+
+  // IntersectionObserver trigger for infinite scroll
+  useEffect(() => {
+    const target = observerTargetRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          loadNextPage();
+        }
+      },
+      { threshold: 0.1, rootMargin: '300px' }
+    );
+
+    observer.observe(target);
+
+    return () => {
+      if (target) observer.unobserve(target);
+    };
+  }, [loadNextPage, hasMore, loading, loadingMore]);
 
   const handleApplyPriceFilter = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -138,7 +215,7 @@ function ProductsContent() {
             </span>
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Browse our catalog with category, brand, and price range filters.
+            Browse our catalog with infinite scroll loading, category, brand, and price range filters.
           </p>
         </div>
 
@@ -416,7 +493,7 @@ function ProductsContent() {
         </div>
 
         {/* Product Grid */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 space-y-8">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -433,11 +510,30 @@ function ProductsContent() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
+
+              {/* Infinite Scroll Trigger Sentinel & Loading Indicator */}
+              <div ref={observerTargetRef} className="py-8 flex flex-col items-center justify-center text-center">
+                {loadingMore && (
+                  <div className="flex items-center gap-2.5 px-5 py-2.5 bg-white border border-blue-100 rounded-full shadow-lg text-blue-600 text-xs font-bold animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Loading more products...</span>
+                  </div>
+                )}
+
+                {!hasMore && products.length > 0 && (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-500 rounded-full text-xs font-semibold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>You've reached the end of the catalog ({products.length} products)</span>
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
 
