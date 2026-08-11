@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { useCart } from '@/context/CartContext';
 import { getStoreMenus, HeaderMenuItem } from '@/services/cmsService';
@@ -13,6 +13,8 @@ import { Search, ShoppingCart, Heart, ChevronDown, ChevronRight, Sparkles, Menu,
 
 export const Header: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { settings, currencyIcon } = useSiteSettings();
   const { totalCount, wishlist, setIsCartOpen } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,6 +31,40 @@ export const Header: React.FC = () => {
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   const customLogo = settings?.header_logo;
+
+  const isMenuItemActive = (menuUrl?: string) => {
+    if (!menuUrl) return false;
+
+    let urlPath = menuUrl;
+    try {
+      if (menuUrl.startsWith('http://') || menuUrl.startsWith('https://')) {
+        const parsed = new URL(menuUrl);
+        urlPath = parsed.pathname + parsed.search;
+      }
+    } catch (e) {
+      urlPath = menuUrl;
+    }
+
+    const [targetPath, targetQuery] = urlPath.split('?');
+
+    if (pathname !== targetPath) {
+      return false;
+    }
+
+    if (!targetQuery) {
+      if (targetPath === '/') return pathname === '/';
+      const activeKeys = Array.from(searchParams.keys());
+      return activeKeys.length === 0;
+    }
+
+    const targetParams = new URLSearchParams(targetQuery);
+    for (const [key, value] of Array.from(targetParams.entries())) {
+      if (searchParams.get(key) !== value) {
+        return false;
+      }
+    }
+    return true;
+  };
 
   // Handle click outside to close search and category dropdowns
   useEffect(() => {
@@ -497,21 +533,30 @@ export const Header: React.FC = () => {
             </div>
 
             {/* Dynamic Admin-Managed Header Links */}
-            <div className="flex items-center gap-3 lg:gap-5 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1">
-              {activeHeaderMenus.map((item, idx) => (
-                <Link
-                  key={idx}
-                  href={item.url || '/'}
-                  className="hover:text-blue-600 transition shrink-0 flex items-center gap-1.5 whitespace-nowrap py-1 px-2 hover:bg-slate-50 rounded-lg"
-                >
-                  <span>{item.title}</span>
-                  {item.badge && (
-                    <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              ))}
+            <div className="flex items-center gap-2 lg:gap-3 overflow-x-auto scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-1">
+              {activeHeaderMenus.map((item, idx) => {
+                const isActive = isMenuItemActive(item.url);
+                return (
+                  <Link
+                    key={idx}
+                    href={item.url || '/'}
+                    className={`transition shrink-0 flex items-center gap-1.5 whitespace-nowrap py-1.5 px-3 rounded-xl text-xs font-bold ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                        : 'text-slate-700 hover:text-blue-600 hover:bg-slate-100/70'
+                    }`}
+                  >
+                    <span>{item.title}</span>
+                    {item.badge && (
+                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${
+                        isActive ? 'bg-white text-blue-700' : 'bg-amber-500 text-white'
+                      }`}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
           </div>
@@ -521,6 +566,36 @@ export const Header: React.FC = () => {
             <span>Fast Nationwide Delivery</span>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-100 py-3 space-y-1.5 px-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            {activeHeaderMenus.map((item, idx) => {
+              const isActive = isMenuItemActive(item.url);
+              return (
+                <Link
+                  key={idx}
+                  href={item.url || '/'}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center justify-between py-2.5 px-3 rounded-xl text-xs font-bold transition ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-slate-700 hover:bg-slate-50 hover:text-blue-600'
+                  }`}
+                >
+                  <span>{item.title}</span>
+                  {item.badge && (
+                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase ${
+                      isActive ? 'bg-white text-blue-700' : 'bg-amber-500 text-white'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </div>
     </header>
   );
