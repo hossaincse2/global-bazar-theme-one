@@ -50,7 +50,7 @@ function ProductsContent() {
     const cat = searchParams.get('category') || '';
     const brand = searchParams.get('brand_id') || searchParams.get('brand') || '';
     const search = searchParams.get('search') || '';
-    const sort = searchParams.get('sort_by') || '';
+    const sort = searchParams.get('sort_by') || (searchParams.get('featured') === '1' || searchParams.get('is_featured') === '1' ? 'featured' : '');
     const minP = searchParams.get('min_price') || '';
     const maxP = searchParams.get('max_price') || '';
 
@@ -73,12 +73,16 @@ function ProductsContent() {
       setHasMore(true);
 
       try {
+        const isFeaturedFilter = sortBy === 'featured' || searchParams.get('featured') === '1' || searchParams.get('is_featured') === '1';
+
         const [prodRes, catList, brandList] = await Promise.all([
           getAllProducts({
             category: selectedCategory || undefined,
             brand_id: selectedBrand || undefined,
             search: searchQuery || undefined,
             sort_by: sortBy || undefined,
+            is_featured: isFeaturedFilter ? 1 : undefined,
+            featured: isFeaturedFilter ? 1 : undefined,
             min_price: appliedMinPrice ? Number(appliedMinPrice) : undefined,
             max_price: appliedMaxPrice ? Number(appliedMaxPrice) : undefined,
             page: 1,
@@ -89,7 +93,10 @@ function ProductsContent() {
         ]);
 
         if (isMounted) {
-          const loadedProducts = prodRes?.data || [];
+          let loadedProducts = prodRes?.data || [];
+          if (isFeaturedFilter) {
+            loadedProducts = loadedProducts.filter((p: any) => p.is_featured !== false && p.is_featured !== 0 && p.featured !== false && p.featured !== 0);
+          }
           setProducts(loadedProducts);
           if (catList && categories.length === 0) setCategories(catList);
           if (brandList && brands.length === 0) setBrands(brandList);
@@ -109,7 +116,7 @@ function ProductsContent() {
     return () => {
       isMounted = false;
     };
-  }, [selectedCategory, selectedBrand, searchQuery, sortBy, appliedMinPrice, appliedMaxPrice]);
+  }, [selectedCategory, selectedBrand, searchQuery, sortBy, appliedMinPrice, appliedMaxPrice, searchParams]);
 
   // Load next page function for infinite scroll
   const loadNextPage = useCallback(async () => {
@@ -119,18 +126,25 @@ function ProductsContent() {
     const nextPage = page + 1;
 
     try {
+      const isFeaturedFilter = sortBy === 'featured' || searchParams.get('featured') === '1' || searchParams.get('is_featured') === '1';
+
       const prodRes = await getAllProducts({
         category: selectedCategory || undefined,
         brand_id: selectedBrand || undefined,
         search: searchQuery || undefined,
         sort_by: sortBy || undefined,
+        is_featured: isFeaturedFilter ? 1 : undefined,
+        featured: isFeaturedFilter ? 1 : undefined,
         min_price: appliedMinPrice ? Number(appliedMinPrice) : undefined,
         max_price: appliedMaxPrice ? Number(appliedMaxPrice) : undefined,
         page: nextPage,
         perPage: 12,
       });
 
-      const newProducts = prodRes?.data || [];
+      let newProducts = prodRes?.data || [];
+      if (isFeaturedFilter) {
+        newProducts = newProducts.filter((p: any) => p.is_featured !== false && p.is_featured !== 0 && p.featured !== false && p.featured !== 0);
+      }
       if (newProducts.length > 0) {
         setProducts((prev) => [...prev, ...newProducts]);
         setPage(nextPage);
@@ -144,7 +158,7 @@ function ProductsContent() {
     } finally {
       setLoadingMore(false);
     }
-  }, [loading, loadingMore, hasMore, page, selectedCategory, selectedBrand, searchQuery, sortBy, appliedMinPrice, appliedMaxPrice]);
+  }, [loading, loadingMore, hasMore, page, selectedCategory, selectedBrand, searchQuery, sortBy, appliedMinPrice, appliedMaxPrice, searchParams]);
 
   // IntersectionObserver trigger for infinite scroll
   useEffect(() => {
@@ -242,7 +256,8 @@ function ProductsContent() {
               onChange={(e) => setSortBy(e.target.value)}
               className="bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-xl px-4 py-2.5 pr-8 focus:outline-hidden shadow-xs cursor-pointer hover:border-blue-500 transition"
             >
-              <option value="">Sort by: Featured</option>
+              <option value="">Sort by: Default</option>
+              <option value="featured">Sort by: Featured</option>
               <option value="price_low_high">Price: Low to High</option>
               <option value="price_high_low">Price: High to Low</option>
               <option value="new_arrival">Newest Arrivals</option>

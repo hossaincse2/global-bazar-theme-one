@@ -89,6 +89,8 @@ export function HomeProductsLoader({ cmsBlocks = [] }: HomeProductsLoaderProps) 
           sales_count: p.sales_count,
           reviews_avg_rating: p.product_rating || 0,
           variants: p.variants || [],
+          is_featured: Boolean(p.is_featured === 1 || p.is_featured === true || p.featured === 1 || p.featured === true),
+          status: p.status,
         }));
 
         console.log(`[HomeProductsLoader] Loaded ${items.length} products`);

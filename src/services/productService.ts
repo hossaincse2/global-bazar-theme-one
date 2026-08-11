@@ -21,6 +21,8 @@ export async function getAllProducts(
     business_category?: string;
     min_price?: number;
     max_price?: number;
+    is_featured?: boolean | number | string;
+    featured?: boolean | number | string;
   } = {}
 ): Promise<PaginatedResponse<Product> | null> {
   const {
@@ -35,6 +37,8 @@ export async function getAllProducts(
     business_category = 'default',
     min_price,
     max_price,
+    is_featured,
+    featured,
   } = params;
 
   const query = new URLSearchParams();
@@ -49,6 +53,12 @@ export async function getAllProducts(
 
   if (min_price !== undefined) query.append('min_price', min_price.toString());
   if (max_price !== undefined) query.append('max_price', max_price.toString());
+  if (is_featured !== undefined) query.append('is_featured', is_featured.toString());
+  if (featured !== undefined) query.append('featured', featured.toString());
+  if (sort_by === 'featured') {
+    if (is_featured === undefined) query.append('is_featured', '1');
+    if (featured === undefined) query.append('featured', '1');
+  }
 
   const response = await fetchApi<PaginatedResponse<Product>>(`/products?${query.toString()}`, { locale, useLocalePrefix: true });
   return response;
