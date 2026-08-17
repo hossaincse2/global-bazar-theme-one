@@ -42,7 +42,7 @@ jobs:
           key: ${{ secrets.S1_SSH_KEY }}
           port: ${{ secrets.S1_SSH_PORT || 22 }}
           script: |
-            cd ${{ secrets.S1_TARGET_DIR || '~/global-bazar-theme-one' }}
+            cd ${{ secrets.S1_TARGET_DIR || '~/global-bazar' }}
             git pull origin main
             npm ci
             npm run build

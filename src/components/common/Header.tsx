@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
@@ -11,7 +11,7 @@ import { getAllProducts } from '@/services/productService';
 import { Category, Product } from '@/types/product';
 import { Search, ShoppingCart, Heart, ChevronDown, ChevronRight, Sparkles, Menu, X, Store, Layers, Loader2 } from 'lucide-react';
 
-export const Header: React.FC = () => {
+function HeaderContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -598,5 +598,13 @@ export const Header: React.FC = () => {
         )}
       </div>
     </header>
+  );
+}
+
+export const Header: React.FC = () => {
+  return (
+    <Suspense fallback={null}>
+      <HeaderContent />
+    </Suspense>
   );
 };

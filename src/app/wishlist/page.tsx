@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useSiteSettings } from '@/context/SiteSettingsContext';
 import { ProductCard } from '@/components/common/ProductCard';
-import { Heart, ShoppingBag, Trash2, ArrowLeft, Sparkles, Check, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingBag, Trash2, ArrowLeft, Sparkles, Check, ShoppingCart, Loader2 } from 'lucide-react';
 
-export default function WishlistPage() {
+function WishlistContent() {
   const { wishlistProducts, toggleWishlist, clearWishlist, addToCart } = useCart();
   const { currencyIcon } = useSiteSettings();
 
@@ -115,5 +115,18 @@ export default function WishlistPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WishlistPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-2" />
+        <p className="text-xs font-semibold">Loading wishlist...</p>
+      </div>
+    }>
+      <WishlistContent />
+    </Suspense>
   );
 }
